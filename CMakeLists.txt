@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.5)
 
-project(EvalMaxSAT)
+project(NewEvalMaxSAT)
 get_filename_component(projectName EvalMaxSAT_bin NAME)
 
 message("cmake for ${projectName}")
@@ -21,7 +21,7 @@ set(externLibs
         z
 )
 
-add_definitions(-DNDEBUG)
+#add_definitions(-DNDEBUG)
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++1z -Wall -O3")
 
 if(TARGET ${projectName})
