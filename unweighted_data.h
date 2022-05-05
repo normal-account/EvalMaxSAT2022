@@ -8,7 +8,7 @@ std::vector<std::string> data_unweighted = {"normalized-par8-2.opb.msat.wcnf.gz"
 "role_smallcomp_0.0_5.wcnf.gz",
 "RISKMAP.wcnf.gz",
 "rev44-2.wcnf.gz",
-"johnson8-2-4.clq.wcnf.gz.1.gz",
+"johnson8-2-4.clq.wcnf.gz",
 "parkinsons_test_1_CNF_4_1.wcnf.gz",
 "parkinsons_test_6_CNF_5_1.wcnf.gz",
 "MinFill_R3_huck.wcnf.gz",

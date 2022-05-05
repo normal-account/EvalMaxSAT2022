@@ -139,7 +139,6 @@ int main(int argc, char *argv[]) {
 
         monMaxSat = new EvalMaxSAT();
 
-
         auto in = gzopen(data_unweighted[id].c_str(), "rb");
         if(!monMaxSat->parse(in)) { // TODO : rendre robuste au header mismatch
             std::cerr << "Impossible de lire le fichier" << std::endl;
@@ -157,7 +156,7 @@ int main(int argc, char *argv[]) {
         if( monMaxSat->getCost() != data_unweighted_cost[id]) {
             std::cerr << "id = " << id << std::endl;
             std::cerr << "file = " << data_unweighted[id] << std::endl;
-            std::cerr << "Résultat éroné : \n   Trouvé : " << monMaxSat->getCost() << "\n  Attendu : " << data_unweighted[id] << std::endl;
+            std::cerr << "Résultat éroné : \n   Trouvé : " << monMaxSat->getCost() << "\n  Attendu : " << data_unweighted_cost[id] << std::endl;
 
             std::vector<bool> assign;
             assign.push_back(0); // fake var_0
