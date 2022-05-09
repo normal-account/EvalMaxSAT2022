@@ -212,7 +212,7 @@ public:
 
     bool solve(const std::vector<int> &assumption) override {
         Glucose::vec<Glucose::Lit> clause;
-        for(auto e: assumption) {
+        for(int e: assumption) {
             assert(e != 0);
             if(e < 0) {
                 clause.push(Glucose::mkLit(-e, true));

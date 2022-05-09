@@ -41,7 +41,7 @@ class EvalMaxSAT : public VirtualMAXSAT {
     MaLib::CommunicationList< int > CL_LitToUnrelax;
     MaLib::CommunicationList< int > CL_LitToRelax;
     MaLib::CommunicationList< std::tuple<std::vector<int>, bool> > CL_CardToAdd;
-    std::atomic<unsigned int> numberMinimizeThreadRunning = 4;
+    std::atomic<unsigned int> numberMinimizeThreadRunning;
     /////
 
 
@@ -102,7 +102,6 @@ class EvalMaxSAT : public VirtualMAXSAT {
 
                 std::list<int> clique;
                 for(auto litProp: prop) {
-                    unsigned int var = static_cast<unsigned int>(abs(litProp));
                     if(isInAssum(-litProp)) {
                         clique.push_back(litProp);
                         assert(solver->solve(std::vector<int>({-litProp, LIT})) == false);
@@ -258,9 +257,6 @@ class EvalMaxSAT : public VirtualMAXSAT {
                                 }
                             }
                         }
-                    } else {
-                        assert(!"Possible?");
-                        addClause({-newAssum[j]});
                     }
                 }
             }
@@ -336,11 +332,7 @@ class EvalMaxSAT : public VirtualMAXSAT {
 
 public:
     EvalMaxSAT(unsigned int nbMinimizeThread=4, VirtualSAT *solver =
-            //new MonMiniSAT()
             new MonGlucose41()
-            //new MonMaple()
-            //new MonCaDiCaL()
-            //new MonMiniCard()
     ) : nbMinimizeThread(nbMinimizeThread), solver(solver)
     {
         for(unsigned int i=0; i<nbMinimizeThread; i++) {
@@ -357,8 +349,9 @@ public:
     virtual void addClause(const std::vector<int> &vclause) {
         if(vclause.size() == 1) {
             unsigned int var1 = abs(vclause[0]);
+            // Increase cost now if the variable exists as a soft one and its sign is different
             if( _weight[var1] > 0 ) {
-                if(model[var1] == (vclause[0] < 0)) {
+                if(model[var1] != (vclause[0] > 0)) {
                     cost += _weight[var1];
                     MonPrint("cost = ", cost);
                 }
@@ -409,23 +402,15 @@ public:
         std::vector<int> uselessLit;
         std::vector<int> L;
         bool completed=false;
-        bool doExhaust=true;
         if(!doFastMinimize) {
             std::set<int> conflictMin(conflict.begin(), conflict.end());
             completed = fullMinimize(S, conflictMin, uselessLit, _coefMinimizeTime*refTime);
-            if(completed) {
-                doExhaust=false;
-            }
+
             for(auto lit: conflictMin) {
                 L.push_back(-lit);
             }
         } else {
             MonPrint("minimize: skip car plus de 100000 ");
-            //completed = fastMinimize(S, conflict);
-
-            if(completed) {
-                doExhaust=false;
-            }
 
             for(auto lit: conflict) {
                 L.push_back(-lit);
@@ -460,10 +445,13 @@ public:
 
     void apply_CL_CardToAdd(std::set<int, CompLit> &assumption) {
         while(CL_CardToAdd.size()) {
-            auto element = CL_CardToAdd.pop();
+            // Each set in CL_CardToAdd contains the literals of a core
+            std::optional< std::tuple < std::vector<int>, bool> > element = CL_CardToAdd.pop();
             assert(element);
 
-            save_card.push_back( {newCard(std::get<0>(*element)), 1} );
+            std::shared_ptr<VirtualCard> card = newCard(std::get<0>(*element));
+            save_card.push_back( {card, 1} );
+
             auto newAssumForCard = (*std::get<0>(save_card.back()) <= std::get<1>(save_card.back()));
 
             assert(newAssumForCard != 0);
@@ -595,15 +583,19 @@ public:
                     chronoLastSolve.pause(true);
                     MonPrint("\t\t\tMain Thread: CL_ConflictToMinimize.wait(nbMinimizeThread=",nbMinimizeThread,", true)...");
                     do {
+                        // If variables are still being unrelaxed, then break as the cost may still be reduced
                         if(CL_LitToUnrelax.size()) {
                             MonPrint("\t\t\tMain Thread: CL_LitToUnrelax.size() = ", CL_LitToUnrelax.size());
                             break;
                         }
                         numberMinimizeThreadRunning = nbMinimizeThread - CL_ConflictToMinimize.getNumberWaiting();
                         assert(numberMinimizeThreadRunning <= nbMinimizeThread);
+
+                        // Wait() returns the current amount of waiting threads with the task of minimizing - to revisit
                     } while( CL_ConflictToMinimize.wait(nbMinimizeThread, true) < nbMinimizeThread );
                     MonPrint("\t\t\tMain Thread: Fin boucle d'attente");
 
+                    // If no variables are left to be unrelaxed, we're done
                     if(CL_LitToUnrelax.size()==0) {
                         MonPrint("\t\t\tMain Thread: CL_LitToUnrelax.size()==0");
 
@@ -617,12 +609,14 @@ public:
                         break;
                     }
                     MonPrint("\t\t\tMain Thread: CL_LitToUnrelax.size()!=0");
-                } else {
+                } else { // Conflict found
                     MonPrint("\t\t\tMain Thread: Solve = false");
                     chronoLastSolve.pause(true);
 
                     std::vector<int> bestUnminimizedConflict = solver->getConflict();
-                    if(bestUnminimizedConflict.size() == 0) {
+
+                    // Special case in which the core is empty, meaning no solution can be found
+                    if(bestUnminimizedConflict.empty()) {
                         cost = -1;
                         return false;
                     }
@@ -634,6 +628,8 @@ public:
                     unsigned int nbSecondSolve = 0;
 
                     MonPrint("\t\t\tMain Thread: Second solve...");
+
+                    // Shuffle assumptions in a loop to hopefully get a smaller core from the SatSolver
                     while((nbSecondSolve < nbSecondSolveMin) || (chronoLastSolve.tac() >= chronoForBreak.tac())) {
                         if(bestUnminimizedConflict.size() == 1)
                             break;
@@ -661,6 +657,7 @@ public:
                     bool doFullMinimize = true;
                     if((assumption.size() < 100000) && (conflictMin.size() > 1)) {
                         MonPrint("\t\t\tMain Thread: fastMinimize(", conflictMin.size(), ")");
+                        // If the fastMinimize is timed out, don't execute the full one as it would be too long
                         doFullMinimize = fastMinimize(solver, conflictMin);
                     }
 
@@ -671,6 +668,7 @@ public:
                         doFullMinimize = false;
                     }
 
+                    // Remove problematic literals from the assumptions
                     for(auto lit: conflictMin) {
                         assumption.erase(lit);
                     }
@@ -691,11 +689,12 @@ public:
                         for(auto lit: conflictMin) {
                             CL_LitToRelax.push(lit);
                         }
+                        // Create cardinality constraints
                         if(conflictMin.size() > 1) {
                             MonPrint("\t\t\tMain Thread: new card");
                             std::vector<int> L;
-                            for(auto lit: conflictMin) {
-                                L.push_back(-lit);
+                            for(auto lit: bestUnminimizedConflict) {
+                                L.push_back(lit);
                             }
                             CL_CardToAdd.push({L, true});
                         }
@@ -795,9 +794,9 @@ public:
             model.resize(var+1);
         }
 
-        assert(_weight[var] == 0);      // We assum the variable is not already soft
+        assert(_weight[var] == 0);      // We assume the variable is not already soft
         _weight[var] = weight;
-        model[var] = value;
+        model[var] = value;             // "value" is the sign but represented as a bool
     }
 
     virtual unsigned int nSoftVar() {

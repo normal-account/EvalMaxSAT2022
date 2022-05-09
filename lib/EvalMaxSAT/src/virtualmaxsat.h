@@ -22,8 +22,10 @@ public:
 
     int addWeightedClause(std::vector<int> clause, unsigned int weight) {
         assert(weight==1);
+        // If it's a unit clause and its literal doesn't exist as a soft var already, add soft variable
         if(clause.size() == 1) {
             if(!isSoft(abs(clause[0]))) {
+                // The weight is zero by default (for hard vars), change it to the right weight if it's a soft var
                 setVarSoft(abs(clause[0]), clause[0] > 0, weight);
                 return clause[0];
             }

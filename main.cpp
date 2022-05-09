@@ -135,11 +135,13 @@ int main(int argc, char *argv[]) {
     for(unsigned int id = 0; id<data_unweighted.size(); id++) {
         srand(0);
 
-        MaLib::Chrono C(data_unweighted[id]);
-
         monMaxSat = new EvalMaxSAT();
 
-        auto in = gzopen(data_unweighted[id].c_str(), "rb");
+        std::string fileName = "./" + data_unweighted[id]; // For a custom path
+
+        MaLib::Chrono C(fileName);
+
+        auto in = gzopen( fileName.c_str(), "rb");
         if(!monMaxSat->parse(in)) { // TODO : rendre robuste au header mismatch
             std::cerr << "Impossible de lire le fichier" << std::endl;
             assert(false);
@@ -155,7 +157,7 @@ int main(int argc, char *argv[]) {
 
         if( monMaxSat->getCost() != data_unweighted_cost[id]) {
             std::cerr << "id = " << id << std::endl;
-            std::cerr << "file = " << data_unweighted[id] << std::endl;
+            std::cerr << "file = " << fileName << std::endl;
             std::cerr << "Résultat éroné : \n   Trouvé : " << monMaxSat->getCost() << "\n  Attendu : " << data_unweighted_cost[id] << std::endl;
 
             std::vector<bool> assign;
@@ -163,7 +165,7 @@ int main(int argc, char *argv[]) {
             for(unsigned int i=1; i<=monMaxSat->nInputVars; i++) {
                 assign.push_back(monMaxSat->getValue(i));
             }
-            std::cerr << " RealCost = " << calculateCost(data_unweighted[id], assign) << std::endl;
+            std::cerr << " RealCost = " << calculateCost(fileName, assign) << std::endl;
 
 
             assert(false);
@@ -176,16 +178,14 @@ int main(int argc, char *argv[]) {
                 assign.push_back(monMaxSat->getValue(i));
             }
 
-            if( calculateCost(data_unweighted[id], assign) != monMaxSat->getCost() ) {
-                std::cerr << "o Error: " << calculateCost(data_unweighted[id], assign) << " != " << monMaxSat->getCost() << std::endl;
+            if( calculateCost(fileName, assign) != monMaxSat->getCost() ) {
+                std::cerr << "o Error: " << calculateCost(fileName, assign) << " != " << monMaxSat->getCost() << std::endl;
             }
-            assert( calculateCost(data_unweighted[id], assign) == monMaxSat->getCost() );
+            assert( calculateCost(fileName, assign) == monMaxSat->getCost() );
         }
-
 
         delete monMaxSat;
     }
-
 }
 
 int mainSAVE(int argc, char *argv[])
