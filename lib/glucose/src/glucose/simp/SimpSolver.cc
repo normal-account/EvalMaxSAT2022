@@ -709,7 +709,7 @@ bool SimpSolver::eliminate(bool turn_off_elim)
             elim_heap.clear();
             goto cleanup; }
 
-        // printf("  ## (time = %6.2f s) ELIM: vars = %d\n", cpuTime(), elim_heap.size());
+        // printf("  ## (time = %6.2f s) ELIM: lazyVars = %d\n", cpuTime(), elim_heap.size());
         for (int cnt = 0; !elim_heap.empty(); cnt++){
             Var elim = elim_heap.removeMin();
             

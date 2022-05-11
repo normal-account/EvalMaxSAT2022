@@ -24,7 +24,7 @@ set(externLibs
 
 
 add_definitions(-DNDEBUG)
-SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++1z -Wall -O3")
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++1z -Wall -O0")
 
 
 if(TARGET ${projectName})

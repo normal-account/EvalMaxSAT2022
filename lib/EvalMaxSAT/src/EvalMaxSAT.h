@@ -25,22 +25,22 @@ class EvalMaxSAT : public VirtualMAXSAT {
     std::vector<VirtualSAT*> solverForMinimize;
 
 
-    std::vector<unsigned int> _weight;
-    std::vector<bool> model;
-    std::vector<int> mapAssum2card;
-    std::vector< std::tuple<std::shared_ptr<VirtualCard>, int> > save_card; // { {1, -2, 4}, 1 } <==> a v !b v d <= 1
+    std::vector<unsigned int> _weight; // Weight of var at index, 0 if hard
+    std::vector<bool> model; // Sign of var at index
+    std::vector<int> mapAssum2card; // Soft var as index to get the index of CardIncremental_Lazy object in save_card
+    std::vector< std::tuple<std::shared_ptr<VirtualCard>, int> > save_card; // Contains CardIncremental_Lazy objects, aka card. constraints
 
     MaLib::Chrono chronoLastSolve;
 
     std::atomic<int> cost = 0;
-    unsigned int _timeOutFastMinimize=60;
-    unsigned int _coefMinimizeTime = 2.0;
+    unsigned int _timeOutFastMinimize=60; // TODO: Magic number
+    unsigned int _coefMinimizeTime = 2.0; // TODO: Magic number
 
     ///// For communication between threads
-    MaLib::CommunicationList< std::tuple<std::list<int>, long> > CL_ConflictToMinimize; // {conflict, time_used_by_the_solver}
-    MaLib::CommunicationList< int > CL_LitToUnrelax;
-    MaLib::CommunicationList< int > CL_LitToRelax;
-    MaLib::CommunicationList< std::tuple<std::vector<int>, bool> > CL_CardToAdd;
+    MaLib::CommunicationList< std::tuple<std::list<int>, long> > CL_ConflictToMinimize;
+    MaLib::CommunicationList< int > CL_LitToUnrelax; // Variables to remove from the assumptions and put back in core
+    MaLib::CommunicationList< int > CL_LitToRelax; // Variables to try to relax the cardinality constraint with which they're related
+    MaLib::CommunicationList< std::tuple<std::vector<int>, bool> > CL_CardToAdd; // Cores for which to add cardinality constraints
     std::atomic<unsigned int> numberMinimizeThreadRunning;
     /////
 
@@ -331,7 +331,7 @@ class EvalMaxSAT : public VirtualMAXSAT {
 
 
 public:
-    EvalMaxSAT(unsigned int nbMinimizeThread=4, VirtualSAT *solver =
+    EvalMaxSAT(unsigned int nbMinimizeThread=0, VirtualSAT *solver =
             new MonGlucose41()
     ) : nbMinimizeThread(nbMinimizeThread), solver(solver)
     {
@@ -397,14 +397,15 @@ public:
 
     private:
 
-
+   // TODO : Revisit this method. Seems like there is better performance without fullMinimize, as there are no useless lits 95% of the time...
     void minimize(VirtualSAT* S, std::list<int> & conflict, long refTime, bool doFastMinimize) {
         std::vector<int> uselessLit;
         std::vector<int> L;
         bool completed=false;
         if(!doFastMinimize) {
             std::set<int> conflictMin(conflict.begin(), conflict.end());
-            completed = fullMinimize(S, conflictMin, uselessLit, _coefMinimizeTime*refTime);
+            // TODO : Fix this.
+            completed = true; //fullMinimize(S, conflictMin, uselessLit, _coefMinimizeTime*refTime);
 
             for(auto lit: conflictMin) {
                 L.push_back(-lit);
@@ -416,7 +417,6 @@ public:
                 L.push_back(-lit);
             }
         }
-
         CL_LitToUnrelax.pushAll(uselessLit);
 
         if(L.size() > 1) {
@@ -426,7 +426,6 @@ public:
         for(auto lit: L) {
             CL_LitToRelax.push(-lit);
         }
-
         MonPrint("size conflict after Minimize: ", conflict.size());
     }
 
@@ -445,35 +444,42 @@ public:
 
     void apply_CL_CardToAdd(std::set<int, CompLit> &assumption) {
         while(CL_CardToAdd.size()) {
-            // Each set in CL_CardToAdd contains the literals of a core
+            // Each "set" in CL_CardToAdd contains the literals of a core
             std::optional< std::tuple < std::vector<int>, bool> > element = CL_CardToAdd.pop();
             assert(element);
 
-            std::shared_ptr<VirtualCard> card = newCard(std::get<0>(*element));
+            std::shared_ptr<VirtualCard> card = std::make_shared<CardIncremental_Lazy>(this, std::get<0>(*element), 1);
+
+            // save_card contains our cardinality constraints
             save_card.push_back( {card, 1} );
 
-            auto newAssumForCard = (*std::get<0>(save_card.back()) <= std::get<1>(save_card.back()));
+            int k = 1;
+
+            int newAssumForCard = card->atMost(k); // Gets the soft variable corresponding to the cardinality constraint with RHS = 1
 
             assert(newAssumForCard != 0);
 
             MonPrint("solveLimited for Exhaust...");
-            if(std::get<1>(*element)) {
+            if(std::get<1>(*element)) { // if clause hasn't been fully minimized
+                // Relax (inc) while the cardinality constraint cannot be satisfied with no other assumptions ; aka exhaust
                 while(solver->solveLimited(std::vector<int>({newAssumForCard}), 10000) == -1) {
-                    std::get<1>(save_card.back())++;
+                    k++;
                     MonPrint("cost = ", cost, " + 1");
                     cost++;
-                    newAssumForCard = ((*std::get<0>(save_card.back())) <= std::get<1>(save_card.back()));
+                    newAssumForCard = card->atMost(k);
 
                     if(newAssumForCard==0) {
                         break;
                     }
                 }
+                std::get<1>(save_card.back()) = k; // Update the rhs of the cardinality in the vector with its new value
             }
             MonPrint("Exhaust fini!");
 
             if(newAssumForCard != 0) {
                 _weight[abs(newAssumForCard)] = 1;
                 assumption.insert( newAssumForCard );
+                // Put cardinality constraint in mapAssum2card associated to softVar as index in mapAssum2card
                 mapAssum2card[ abs(newAssumForCard) ] = save_card.size()-1;
             }
         }
@@ -488,11 +494,13 @@ public:
             _weight[var] = 0;
 
             if(mapAssum2card[var] != -1) {
-                int idCard = mapAssum2card[var];
+                int idCard = mapAssum2card[var]; // Get index in save_card
                 assert(idCard >= 0);
 
-                std::get<1>(save_card[idCard])++;
-                int forCard = (*std::get<0>(save_card[idCard]) <= std::get<1>(save_card[idCard]));
+                std::get<1>(save_card[idCard])++; // Increase RHS
+
+                // Get soft var associated with cardinality constraint with increased RHS
+                int forCard = (std::get<0>(save_card[idCard])->atMost(std::get<1>(save_card[idCard])));
 
                 if(forCard != 0) {
                     assumption.insert( forCard );
@@ -715,7 +723,6 @@ public:
             //delete s2;
         }
 
-        return true;
     }
 
 

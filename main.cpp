@@ -73,8 +73,8 @@ long calculateCost(const std::string & file, const std::vector<bool> &result) {
 
                         if(Glucose::eagerMatch(in, "cnf")) {
                             vars = Glucose::parseInt(in);
-                            /*setNInputVars(vars);
-                            for(int i=0; i<vars; i++) {
+                            /*setNInputVars(lazyVars);
+                            for(int i=0; i<lazyVars; i++) {
                                 newVar();
                             }*/
                             inClauses = Glucose::parseInt(in);

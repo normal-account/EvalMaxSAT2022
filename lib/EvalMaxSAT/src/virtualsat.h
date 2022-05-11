@@ -149,7 +149,9 @@ public:
     }
 
     std::shared_ptr<VirtualCard> newCard(const std::vector<int> &clause, unsigned int bound=1) {
+        //CardIncremental_Lazy(this, clause, bound); // TODO : !!!! REMOVE REMOVE !!!!
         return std::make_shared<CardIncremental_Lazy>(this, clause, bound);
+
         //return std::make_shared<Card_Lazy_OE>(this, clause); // Fonctionne moins bien
     }
 
