@@ -113,9 +113,11 @@ static int parseInt(B& in) {
     int     val = 0;
     bool    neg = false;
     skipWhitespace(in);
+
     if      (*in == '-') neg = true, ++in;
     else if (*in == '+') ++in;
-    if (*in < '0' || *in > '9') fprintf(stderr, "PARSE ERROR! Unexpected char: %c\n", *in), exit(3);
+    if (*in < '0' || *in > '9')
+        fprintf(stderr, "PARSE ERROR!!! Unexpected char: %c\n", *in);//, exit(3);
 
     // Convert string number to int
     while (*in >= '0' && *in <= '9')
@@ -126,9 +128,15 @@ static int parseInt(B& in) {
 
 template<class B>
 static int64_t parseInt64(B& in) {
+
     int64_t     val = 0;
     bool    neg = false;
     skipWhitespace(in);
+    if (*in == 'h') { // Experimental
+        ++in;
+        ++in;
+        return 0;
+    }
     if      (*in == '-') neg = true, ++in;
     else if (*in == '+') ++in;
     if (*in < '0' || *in > '9') fprintf(stderr, "PARSE ERROR! Unexpected char: %c\n", *in), exit(3);

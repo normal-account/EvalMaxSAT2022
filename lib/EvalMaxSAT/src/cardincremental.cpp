@@ -9,19 +9,19 @@ CardIncremental_Lazy::CardIncremental_Lazy(VirtualSAT * solver, const std::vecto
 {
     std::deque<std::shared_ptr<TotTree>> nqueue;
 
+    // Create the leafs and store them in a queue
     for ( unsigned i = 0; i < _maxVars; ++i) {
-        std::shared_ptr<TotTree> tree = std::make_shared<TotTree>();
+        std::shared_ptr<TotTree> node = std::make_shared<TotTree>();
 
-        tree->lazyVars.resize( 1);
-        tree->lazyVars[0]   = LazyVariable::encapsulate( clause[i]);
-        tree->nof_input = 1;
-        tree->left      = 0;
-        tree->right     = 0;
+        node->lazyVars.push_back( LazyVariable::encapsulate( clause[i]));
+        node->nof_input = 1;
+        node->left      = nullptr;
+        node->right     = 0;
 
-        nqueue.push_back(tree);
+        nqueue.push_back( node);
     }
 
-    // Create tree from the bottom-up by starting from the beginning of the queue
+    // Create non-leaf nodes from the bottom-up by starting from the beginning of the queue
     while (nqueue.size() > 1) {
         auto l = nqueue.front();
         nqueue.pop_front();
@@ -82,7 +82,6 @@ void CardIncremental_Lazy::increase_ua( std::vector< std::shared_ptr<LazyVariabl
 
     unsigned maxj = std::min(rhs, (unsigned)bVars.size());
     for (unsigned j = last; j < maxj; ++j) {
-        //addClause({-bVars[j], ogVars[j]});
         ogVars[j]->addImpliquant( {bVars[j]});
     }
 
@@ -110,7 +109,7 @@ void CardIncremental_Lazy::new_ua( std::vector< std::shared_ptr<LazyVariable> >&
         ogVars[j]->addImpliquant( {bVars[j]});
     }
 
-    // Same as above ; if bVar[index] is true, then ogVar[index] must be true as well
+    // Same as above ; if aVar[index] is true, then ogVar[index] must be true as well
     kmin = std::min(rhs, (unsigned)aVars.size());
     for (unsigned i = 0; i < kmin; ++i) {
         ogVars[i]->addImpliquant( {aVars[i]});

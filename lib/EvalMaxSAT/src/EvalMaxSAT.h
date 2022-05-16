@@ -493,7 +493,7 @@ public:
 
             _weight[var] = 0;
 
-            if(mapAssum2card[var] != -1) {
+            if(mapAssum2card[var] != -1) { // If there is a cardinality constraint associated to this soft var
                 int idCard = mapAssum2card[var]; // Get index in save_card
                 assert(idCard >= 0);
 
@@ -516,8 +516,8 @@ public:
 
     bool solve() {
         // CONFIG
-        unsigned int nbSecondSolveMin = 20;
-        unsigned int timeOutForSecondSolve = 60;
+        unsigned int nbSecondSolveMin = 20;      // TODO: Magic number
+        unsigned int timeOutForSecondSolve = 60; // TODO: Magic number
         // END CONFIG
         
         // Reinit CL
@@ -681,8 +681,6 @@ public:
                         assumption.erase(lit);
                     }
 
-                    //assert(s2->solve(conflictMin)==false); // This assert can be false. Why??
-
                     if(doFullMinimize) {
                         MonPrint("\t\t\tMain Thread: call CL_ConflictToMinimize.push");
 
@@ -773,6 +771,7 @@ public:
         return var;
     }
 
+
     virtual unsigned int newVar(bool decisionVar=true) {
         _weight.push_back(0);
         mapAssum2card.push_back(-1);
@@ -790,7 +789,7 @@ public:
     }
 
     virtual bool isSoft(unsigned int var) {
-        return _weight[var] > 0;
+        return var < _weight.size() && _weight[var] > 0;
     }
 
     virtual void setVarSoft(unsigned int var, bool value, unsigned int weight) {
@@ -859,10 +858,11 @@ private:
 
         int maxLoop = 10000;
         if(removable.size() < 8) {
-            maxLoop = 2*std::tgamma(removable.size());
+            maxLoop = 2*std::tgamma(removable.size()); // Gamma function is like a factorial but for natural numbers
         }
 
         chrono.tic();
+        // Same thing as above but with shuffles and a nested loop to hopefully find more useless lits
         for(int i=0; i<maxLoop; i++) {
             std::set<int> wConflict = conflict;
             std::vector<int> tmp_uselessLit;
@@ -929,7 +929,6 @@ private:
 
     bool fastMinimize(VirtualSAT* solverForMinimize, std::list<int> &conflict) {
         int B = 1;
-
         Chrono chrono;
         for(auto it = conflict.begin(); it != conflict.end(); ++it) {
 
@@ -940,7 +939,6 @@ private:
 
             auto lit = *it;
             it = conflict.erase(it);
-
             switch(solverForMinimize->solveLimited(conflict, B)) {
             case 0:
                 [[fallthrough]];

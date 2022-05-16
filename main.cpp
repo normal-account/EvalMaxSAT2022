@@ -40,15 +40,13 @@ static void readClause(B& in, std::vector<int>& lits) {
 }
 
 
-
 long calculateCost(const std::string & file, const std::vector<bool> &result) {
     long cost = 0;
     auto in_ = gzopen(file.c_str(), "rb");
 
-
                 Glucose::StreamBuffer in(in_);
 
-                bool weighted = false;
+                bool weighted = true;
                 int64_t top = -1;
                 int64_t weight = 1;
 
@@ -62,29 +60,6 @@ long calculateCost(const std::string & file, const std::vector<bool> &result) {
                     if(*in == EOF)
                         break;
 
-                    if(*in == 'p') {
-                        ++in;
-                        if(*in != ' ') {
-                            std::cerr << "o PARSE ERROR! Unexpected char: " << static_cast<char>(*in) << std::endl;
-                            return false;
-                        }
-                        ++in;
-                        if(*in == 'w') { weighted = true; ++in; }
-
-                        if(Glucose::eagerMatch(in, "cnf")) {
-                            vars = Glucose::parseInt(in);
-                            /*setNInputVars(lazyVars);
-                            for(int i=0; i<lazyVars; i++) {
-                                newVar();
-                            }*/
-                            inClauses = Glucose::parseInt(in);
-                            if(weighted && *in != '\n')
-                                top = Glucose::parseInt64(in);
-                        } else {
-                            std::cerr << "o PARSE ERROR! Unexpected char: " << static_cast<char>(*in) << std::endl;
-                            return false;
-                        }
-                    }
                     else if(*in == 'c')
                         Glucose::skipLine(in);
                     else {
@@ -92,7 +67,7 @@ long calculateCost(const std::string & file, const std::vector<bool> &result) {
                         if(weighted)
                             weight = Glucose::parseInt64(in);
                         readClause(in, lits);
-                        if(weight >= top) {
+                        if(weight == 0) {
                             bool sat=false;
                             for(auto l: lits) {
                                 assert(abs(l) < result.size());
@@ -118,11 +93,6 @@ long calculateCost(const std::string & file, const std::vector<bool> &result) {
                         }
                     }
                 }
-                if(count != inClauses) {
-                    std::cerr << "o WARNING! DIMACS header mismatch: wrong number of clauses." << std::endl;
-                    //return false;
-                }
-
 
     gzclose(in_);
     return cost;
@@ -137,18 +107,17 @@ int main(int argc, char *argv[]) {
 
         monMaxSat = new EvalMaxSAT();
 
-        std::string fileName = "./" + data_unweighted[id]; // For a custom path
+        std::string filePath = "./" + data_unweighted[id]; // For a custom path
 
-        MaLib::Chrono C(fileName);
+        MaLib::Chrono C( filePath);
 
-        auto in = gzopen( fileName.c_str(), "rb");
+        auto in = gzopen( filePath.c_str(), "rb");
         if(!monMaxSat->parse(in)) { // TODO : rendre robuste au header mismatch
             std::cerr << "Impossible de lire le fichier" << std::endl;
             assert(false);
             return -1;
         }
         gzclose(in);
-
         if(!monMaxSat->solve()) {
             std::cerr << "Pas de solution ?!?" << std::endl;
             assert(false);
@@ -157,15 +126,16 @@ int main(int argc, char *argv[]) {
 
         if( monMaxSat->getCost() != data_unweighted_cost[id]) {
             std::cerr << "id = " << id << std::endl;
-            std::cerr << "file = " << fileName << std::endl;
+            std::cerr << "file = " << filePath << std::endl;
             std::cerr << "Résultat éroné : \n   Trouvé : " << monMaxSat->getCost() << "\n  Attendu : " << data_unweighted_cost[id] << std::endl;
 
             std::vector<bool> assign;
             assign.push_back(0); // fake var_0
-            for(unsigned int i=1; i<=monMaxSat->nInputVars; i++) {
+
+            for(unsigned int i=1; i<=data_unweighted_nVars[id]; i++) {
                 assign.push_back(monMaxSat->getValue(i));
             }
-            std::cerr << " RealCost = " << calculateCost(fileName, assign) << std::endl;
+            std::cerr << " RealCost = " << calculateCost( filePath, assign) << std::endl;
 
 
             assert(false);
@@ -174,17 +144,18 @@ int main(int argc, char *argv[]) {
 
             std::vector<bool> assign;
             assign.push_back(0); // fake var_0
-            for(unsigned int i=1; i<=monMaxSat->nInputVars; i++) {
+            for(unsigned int i=1; i<=data_unweighted_nVars[id]; i++) {
                 assign.push_back(monMaxSat->getValue(i));
             }
 
-            if( calculateCost(fileName, assign) != monMaxSat->getCost() ) {
-                std::cerr << "o Error: " << calculateCost(fileName, assign) << " != " << monMaxSat->getCost() << std::endl;
+            if( calculateCost( filePath, assign) != monMaxSat->getCost() ) {
+                std::cerr << "o Error: " << calculateCost( filePath, assign) << " != " << monMaxSat->getCost() << std::endl;
             }
-            assert( calculateCost(fileName, assign) == monMaxSat->getCost() );
+            assert( calculateCost( filePath, assign) == monMaxSat->getCost() );
         }
 
         delete monMaxSat;
+        break;  // TODO: !!! REMOVE !!!
     }
 }
 
