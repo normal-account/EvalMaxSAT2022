@@ -9,7 +9,8 @@
 
 class VirtualMAXSAT : public VirtualSAT {
 public:
-    std::vector<bool> literalPresent; // Where int is the var, and bool is whether it should be added as a soft var or not
+    std::vector<bool> literalPresent; // Vector storing all encountered vars
+
    // Save clauses in a vector to add them to the solver after adding the variables
     std::vector<std::tuple<std::vector<int>, int>> softClauses;
     std::vector<std::vector<int>> hardClauses;
