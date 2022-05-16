@@ -53,14 +53,19 @@ for path in glob.glob(ogPath + "*.gz"):
     fileOUT = gzip.open(newPath + uncompressedFile, "wb+")
 
     # Do the actual work
+    addLine = False
     for line in fileIN:
         if (line == lineToRemove):
             continue
         if (line.startswith(top)):
+            addLine = True
             line = line.split()
             line[0] = '\nh'
             fileOUT.write(' '.join(line).encode())
         else:
+            if (addLine):
+                line = '\n' + line
+            addLine = False
             fileOUT.write(line.encode())
 
     fileIN.close()
