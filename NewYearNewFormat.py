@@ -13,10 +13,13 @@ tempPath = "./temp/"             # path to temporarily store uncompressed files
 
 
 for path in glob.glob(ogPath + "*.gz"):
-    print(path)
-
     # Creating the uncompressed file
     uncompressedFile = os.path.basename(path)
+    print(uncompressedFile)
+    if (os.path.exists(newPath + uncompressedFile)):
+        print("File has already been converted - skipping.")
+        continue
+
     with gzip.open(path, 'rb') as compressedFile:
         with open(tempPath + uncompressedFile, 'wb') as uncompressedPath:
 	        shutil.copyfileobj(compressedFile, uncompressedPath)
@@ -24,14 +27,12 @@ for path in glob.glob(ogPath + "*.gz"):
     uncompressedPath = tempPath + uncompressedFile
     fileIN = open(uncompressedPath, "rt")
     
-    print(tempPath + uncompressedFile)
     # Find the top to replace it, and remove the line starting in p
     top = 0
     for line in fileIN:
         if line.startswith('p'):
             try:
                 top = line.split().pop(4)
-                print(top)
             except Exception as e:
                 print(e)
                 continue     
