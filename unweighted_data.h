@@ -1,3 +1,5 @@
+#include <vector>
+
 std::vector<std::string> data_unweighted = {"normalized-par8-2.opb.msat.wcnf.gz",
 "KARATE.wcnf.gz",
 "role_smallcomp_0.0_6.wcnf.gz",
