@@ -18,7 +18,8 @@ int LazyVariable::get() {
             }
         }
 
-        var = solver->newVar(false);
+        // To revisit - the name of the method is misleading as we're actually adding a hard var
+        var = solver->newSoftVar(false, 0);
 
         /*
          * Add the cardinality constraints to the SatSolver in a recursive manner.
@@ -36,7 +37,7 @@ int LazyVariable::get() {
             assert(clause.size() > 0);
 
             clause.push_back(*var);
-            solver->addClause(clause);
+            solver -> addClause( clause );
         }
     }
 

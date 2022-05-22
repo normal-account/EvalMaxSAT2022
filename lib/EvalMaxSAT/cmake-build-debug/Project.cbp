@@ -1,0 +1,673 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6"/>
+	<Project>
+		<Option title="Project"/>
+		<Option makefile_is_custom="1"/>
+		<Option compiler="gcc"/>
+		<Option virtualFolders="CMake Files\;CMake Files\..\;CMake Files\..\MaLib\;CMake Files\..\cadical\;"/>
+		<Build>
+			<Target title="all">
+				<Option working_dir="/home/carle/.ssh/CadicalEval/lib/EvalMaxSAT/cmake-build-debug"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="/usr/bin/make -j16 -f &quot;/home/carle/.ssh/CadicalEval/lib/EvalMaxSAT/cmake-build-debug/Makefile&quot;  VERBOSE=1 all"/>
+					<CompileFile command="/usr/bin/make -j16 -f &quot;/home/carle/.ssh/CadicalEval/lib/EvalMaxSAT/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -j16 -f &quot;/home/carle/.ssh/CadicalEval/lib/EvalMaxSAT/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -j16 -f &quot;/home/carle/.ssh/CadicalEval/lib/EvalMaxSAT/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="install/strip">
+				<Option working_dir="/home/carle/.ssh/CadicalEval/lib/EvalMaxSAT/cmake-build-debug"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="/usr/bin/make -j16 -f &quot;/home/carle/.ssh/CadicalEval/lib/EvalMaxSAT/cmake-build-debug/Makefile&quot;  VERBOSE=1 install/strip"/>
+					<CompileFile command="/usr/bin/make -j16 -f &quot;/home/carle/.ssh/CadicalEval/lib/EvalMaxSAT/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -j16 -f &quot;/home/carle/.ssh/CadicalEval/lib/EvalMaxSAT/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -j16 -f &quot;/home/carle/.ssh/CadicalEval/lib/EvalMaxSAT/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="install/local">
+				<Option working_dir="/home/carle/.ssh/CadicalEval/lib/EvalMaxSAT/cmake-build-debug"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="/usr/bin/make -j16 -f &quot;/home/carle/.ssh/CadicalEval/lib/EvalMaxSAT/cmake-build-debug/Makefile&quot;  VERBOSE=1 install/local"/>
+					<CompileFile command="/usr/bin/make -j16 -f &quot;/home/carle/.ssh/CadicalEval/lib/EvalMaxSAT/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -j16 -f &quot;/home/carle/.ssh/CadicalEval/lib/EvalMaxSAT/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -j16 -f &quot;/home/carle/.ssh/CadicalEval/lib/EvalMaxSAT/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="EvalMaxSAT">
+				<Option output="/home/carle/.ssh/CadicalEval/lib/EvalMaxSAT/cmake-build-debug/libEvalMaxSAT.a" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="/home/carle/.ssh/CadicalEval/lib/EvalMaxSAT/cmake-build-debug"/>
+				<Option object_output="./"/>
+				<Option type="2"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add option="-DNDEBUG"/>
+					<Add directory="/home/carle/.ssh/CadicalEval/lib/EvalMaxSAT/../MaLib/src"/>
+					<Add directory="/home/carle/.ssh/CadicalEval/lib/EvalMaxSAT/../cadical/src"/>
+					<Add directory="/usr/lib/gcc/x86_64-pc-linux-gnu/12.1.0/../../../../include/c++/12.1.0"/>
+					<Add directory="/usr/lib/gcc/x86_64-pc-linux-gnu/12.1.0/../../../../include/c++/12.1.0/x86_64-pc-linux-gnu"/>
+					<Add directory="/usr/lib/gcc/x86_64-pc-linux-gnu/12.1.0/../../../../include/c++/12.1.0/backward"/>
+					<Add directory="/usr/lib/gcc/x86_64-pc-linux-gnu/12.1.0/include"/>
+					<Add directory="/usr/local/include"/>
+					<Add directory="/usr/lib/gcc/x86_64-pc-linux-gnu/12.1.0/include-fixed"/>
+					<Add directory="/usr/include"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="/usr/bin/make -j16 -f &quot;/home/carle/.ssh/CadicalEval/lib/EvalMaxSAT/cmake-build-debug/Makefile&quot;  VERBOSE=1 EvalMaxSAT"/>
+					<CompileFile command="/usr/bin/make -j16 -f &quot;/home/carle/.ssh/CadicalEval/lib/EvalMaxSAT/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -j16 -f &quot;/home/carle/.ssh/CadicalEval/lib/EvalMaxSAT/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -j16 -f &quot;/home/carle/.ssh/CadicalEval/lib/EvalMaxSAT/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="EvalMaxSAT/fast">
+				<Option output="/home/carle/.ssh/CadicalEval/lib/EvalMaxSAT/cmake-build-debug/libEvalMaxSAT.a" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="/home/carle/.ssh/CadicalEval/lib/EvalMaxSAT/cmake-build-debug"/>
+				<Option object_output="./"/>
+				<Option type="2"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add option="-DNDEBUG"/>
+					<Add directory="/home/carle/.ssh/CadicalEval/lib/EvalMaxSAT/../MaLib/src"/>
+					<Add directory="/home/carle/.ssh/CadicalEval/lib/EvalMaxSAT/../cadical/src"/>
+					<Add directory="/usr/lib/gcc/x86_64-pc-linux-gnu/12.1.0/../../../../include/c++/12.1.0"/>
+					<Add directory="/usr/lib/gcc/x86_64-pc-linux-gnu/12.1.0/../../../../include/c++/12.1.0/x86_64-pc-linux-gnu"/>
+					<Add directory="/usr/lib/gcc/x86_64-pc-linux-gnu/12.1.0/../../../../include/c++/12.1.0/backward"/>
+					<Add directory="/usr/lib/gcc/x86_64-pc-linux-gnu/12.1.0/include"/>
+					<Add directory="/usr/local/include"/>
+					<Add directory="/usr/lib/gcc/x86_64-pc-linux-gnu/12.1.0/include-fixed"/>
+					<Add directory="/usr/include"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="/usr/bin/make -j16 -f &quot;/home/carle/.ssh/CadicalEval/lib/EvalMaxSAT/cmake-build-debug/Makefile&quot;  VERBOSE=1 EvalMaxSAT/fast"/>
+					<CompileFile command="/usr/bin/make -j16 -f &quot;/home/carle/.ssh/CadicalEval/lib/EvalMaxSAT/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -j16 -f &quot;/home/carle/.ssh/CadicalEval/lib/EvalMaxSAT/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -j16 -f &quot;/home/carle/.ssh/CadicalEval/lib/EvalMaxSAT/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="edit_cache">
+				<Option working_dir="/home/carle/.ssh/CadicalEval/lib/EvalMaxSAT/cmake-build-debug"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="/usr/bin/make -j16 -f &quot;/home/carle/.ssh/CadicalEval/lib/EvalMaxSAT/cmake-build-debug/Makefile&quot;  VERBOSE=1 edit_cache"/>
+					<CompileFile command="/usr/bin/make -j16 -f &quot;/home/carle/.ssh/CadicalEval/lib/EvalMaxSAT/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -j16 -f &quot;/home/carle/.ssh/CadicalEval/lib/EvalMaxSAT/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -j16 -f &quot;/home/carle/.ssh/CadicalEval/lib/EvalMaxSAT/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="rebuild_cache">
+				<Option working_dir="/home/carle/.ssh/CadicalEval/lib/EvalMaxSAT/cmake-build-debug"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="/usr/bin/make -j16 -f &quot;/home/carle/.ssh/CadicalEval/lib/EvalMaxSAT/cmake-build-debug/Makefile&quot;  VERBOSE=1 rebuild_cache"/>
+					<CompileFile command="/usr/bin/make -j16 -f &quot;/home/carle/.ssh/CadicalEval/lib/EvalMaxSAT/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -j16 -f &quot;/home/carle/.ssh/CadicalEval/lib/EvalMaxSAT/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -j16 -f &quot;/home/carle/.ssh/CadicalEval/lib/EvalMaxSAT/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="install">
+				<Option working_dir="/home/carle/.ssh/CadicalEval/lib/EvalMaxSAT/cmake-build-debug"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="/usr/bin/make -j16 -f &quot;/home/carle/.ssh/CadicalEval/lib/EvalMaxSAT/cmake-build-debug/Makefile&quot;  VERBOSE=1 install"/>
+					<CompileFile command="/usr/bin/make -j16 -f &quot;/home/carle/.ssh/CadicalEval/lib/EvalMaxSAT/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -j16 -f &quot;/home/carle/.ssh/CadicalEval/lib/EvalMaxSAT/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -j16 -f &quot;/home/carle/.ssh/CadicalEval/lib/EvalMaxSAT/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="list_install_components">
+				<Option working_dir="/home/carle/.ssh/CadicalEval/lib/EvalMaxSAT/cmake-build-debug"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="/usr/bin/make -j16 -f &quot;/home/carle/.ssh/CadicalEval/lib/EvalMaxSAT/cmake-build-debug/Makefile&quot;  VERBOSE=1 list_install_components"/>
+					<CompileFile command="/usr/bin/make -j16 -f &quot;/home/carle/.ssh/CadicalEval/lib/EvalMaxSAT/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -j16 -f &quot;/home/carle/.ssh/CadicalEval/lib/EvalMaxSAT/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -j16 -f &quot;/home/carle/.ssh/CadicalEval/lib/EvalMaxSAT/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="MaLib">
+				<Option output="/home/carle/.ssh/CadicalEval/lib/EvalMaxSAT/cmake-build-debug/MaLib/libMaLib.a" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="/home/carle/.ssh/CadicalEval/lib/EvalMaxSAT/cmake-build-debug/MaLib"/>
+				<Option object_output="./"/>
+				<Option type="2"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add option="-DNDEBUG"/>
+					<Add directory="/usr/lib/gcc/x86_64-pc-linux-gnu/12.1.0/../../../../include/c++/12.1.0"/>
+					<Add directory="/usr/lib/gcc/x86_64-pc-linux-gnu/12.1.0/../../../../include/c++/12.1.0/x86_64-pc-linux-gnu"/>
+					<Add directory="/usr/lib/gcc/x86_64-pc-linux-gnu/12.1.0/../../../../include/c++/12.1.0/backward"/>
+					<Add directory="/usr/lib/gcc/x86_64-pc-linux-gnu/12.1.0/include"/>
+					<Add directory="/usr/local/include"/>
+					<Add directory="/usr/lib/gcc/x86_64-pc-linux-gnu/12.1.0/include-fixed"/>
+					<Add directory="/usr/include"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="/usr/bin/make -j16 -f &quot;/home/carle/.ssh/CadicalEval/lib/EvalMaxSAT/cmake-build-debug/MaLib/Makefile&quot;  VERBOSE=1 MaLib"/>
+					<CompileFile command="/usr/bin/make -j16 -f &quot;/home/carle/.ssh/CadicalEval/lib/EvalMaxSAT/cmake-build-debug/MaLib/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -j16 -f &quot;/home/carle/.ssh/CadicalEval/lib/EvalMaxSAT/cmake-build-debug/MaLib/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -j16 -f &quot;/home/carle/.ssh/CadicalEval/lib/EvalMaxSAT/cmake-build-debug/MaLib/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="MaLib/fast">
+				<Option output="/home/carle/.ssh/CadicalEval/lib/EvalMaxSAT/cmake-build-debug/MaLib/libMaLib.a" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="/home/carle/.ssh/CadicalEval/lib/EvalMaxSAT/cmake-build-debug/MaLib"/>
+				<Option object_output="./"/>
+				<Option type="2"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add option="-DNDEBUG"/>
+					<Add directory="/usr/lib/gcc/x86_64-pc-linux-gnu/12.1.0/../../../../include/c++/12.1.0"/>
+					<Add directory="/usr/lib/gcc/x86_64-pc-linux-gnu/12.1.0/../../../../include/c++/12.1.0/x86_64-pc-linux-gnu"/>
+					<Add directory="/usr/lib/gcc/x86_64-pc-linux-gnu/12.1.0/../../../../include/c++/12.1.0/backward"/>
+					<Add directory="/usr/lib/gcc/x86_64-pc-linux-gnu/12.1.0/include"/>
+					<Add directory="/usr/local/include"/>
+					<Add directory="/usr/lib/gcc/x86_64-pc-linux-gnu/12.1.0/include-fixed"/>
+					<Add directory="/usr/include"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="/usr/bin/make -j16 -f &quot;/home/carle/.ssh/CadicalEval/lib/EvalMaxSAT/cmake-build-debug/MaLib/Makefile&quot;  VERBOSE=1 MaLib/fast"/>
+					<CompileFile command="/usr/bin/make -j16 -f &quot;/home/carle/.ssh/CadicalEval/lib/EvalMaxSAT/cmake-build-debug/MaLib/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -j16 -f &quot;/home/carle/.ssh/CadicalEval/lib/EvalMaxSAT/cmake-build-debug/MaLib/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -j16 -f &quot;/home/carle/.ssh/CadicalEval/lib/EvalMaxSAT/cmake-build-debug/MaLib/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="cadical">
+				<Option output="/home/carle/.ssh/CadicalEval/lib/EvalMaxSAT/cmake-build-debug/cadical/libcadical.a" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="/home/carle/.ssh/CadicalEval/lib/EvalMaxSAT/cmake-build-debug/cadical"/>
+				<Option object_output="./"/>
+				<Option type="2"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add option="-DNDEBUG"/>
+					<Add directory="/home/carle/.ssh/CadicalEval/lib/cadical/src"/>
+					<Add directory="/usr/lib/gcc/x86_64-pc-linux-gnu/12.1.0/../../../../include/c++/12.1.0"/>
+					<Add directory="/usr/lib/gcc/x86_64-pc-linux-gnu/12.1.0/../../../../include/c++/12.1.0/x86_64-pc-linux-gnu"/>
+					<Add directory="/usr/lib/gcc/x86_64-pc-linux-gnu/12.1.0/../../../../include/c++/12.1.0/backward"/>
+					<Add directory="/usr/lib/gcc/x86_64-pc-linux-gnu/12.1.0/include"/>
+					<Add directory="/usr/local/include"/>
+					<Add directory="/usr/lib/gcc/x86_64-pc-linux-gnu/12.1.0/include-fixed"/>
+					<Add directory="/usr/include"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="/usr/bin/make -j16 -f &quot;/home/carle/.ssh/CadicalEval/lib/EvalMaxSAT/cmake-build-debug/cadical/Makefile&quot;  VERBOSE=1 cadical"/>
+					<CompileFile command="/usr/bin/make -j16 -f &quot;/home/carle/.ssh/CadicalEval/lib/EvalMaxSAT/cmake-build-debug/cadical/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -j16 -f &quot;/home/carle/.ssh/CadicalEval/lib/EvalMaxSAT/cmake-build-debug/cadical/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -j16 -f &quot;/home/carle/.ssh/CadicalEval/lib/EvalMaxSAT/cmake-build-debug/cadical/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="cadical/fast">
+				<Option output="/home/carle/.ssh/CadicalEval/lib/EvalMaxSAT/cmake-build-debug/cadical/libcadical.a" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="/home/carle/.ssh/CadicalEval/lib/EvalMaxSAT/cmake-build-debug/cadical"/>
+				<Option object_output="./"/>
+				<Option type="2"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add option="-DNDEBUG"/>
+					<Add directory="/home/carle/.ssh/CadicalEval/lib/cadical/src"/>
+					<Add directory="/usr/lib/gcc/x86_64-pc-linux-gnu/12.1.0/../../../../include/c++/12.1.0"/>
+					<Add directory="/usr/lib/gcc/x86_64-pc-linux-gnu/12.1.0/../../../../include/c++/12.1.0/x86_64-pc-linux-gnu"/>
+					<Add directory="/usr/lib/gcc/x86_64-pc-linux-gnu/12.1.0/../../../../include/c++/12.1.0/backward"/>
+					<Add directory="/usr/lib/gcc/x86_64-pc-linux-gnu/12.1.0/include"/>
+					<Add directory="/usr/local/include"/>
+					<Add directory="/usr/lib/gcc/x86_64-pc-linux-gnu/12.1.0/include-fixed"/>
+					<Add directory="/usr/include"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="/usr/bin/make -j16 -f &quot;/home/carle/.ssh/CadicalEval/lib/EvalMaxSAT/cmake-build-debug/cadical/Makefile&quot;  VERBOSE=1 cadical/fast"/>
+					<CompileFile command="/usr/bin/make -j16 -f &quot;/home/carle/.ssh/CadicalEval/lib/EvalMaxSAT/cmake-build-debug/cadical/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -j16 -f &quot;/home/carle/.ssh/CadicalEval/lib/EvalMaxSAT/cmake-build-debug/cadical/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -j16 -f &quot;/home/carle/.ssh/CadicalEval/lib/EvalMaxSAT/cmake-build-debug/cadical/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+		</Build>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/EvalMaxSAT/src/EvalMaxSAT.h">
+			<Option target="EvalMaxSAT"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/EvalMaxSAT/src/ParseUtils.h">
+			<Option target="EvalMaxSAT"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/EvalMaxSAT/src/card_oe.cpp">
+			<Option target="EvalMaxSAT"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/EvalMaxSAT/src/card_oe.h">
+			<Option target="EvalMaxSAT"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/EvalMaxSAT/src/cardincremental.cpp">
+			<Option target="EvalMaxSAT"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/EvalMaxSAT/src/cardincremental.h">
+			<Option target="EvalMaxSAT"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/EvalMaxSAT/src/lazyvariable.cpp">
+			<Option target="EvalMaxSAT"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/EvalMaxSAT/src/lazyvariable.h">
+			<Option target="EvalMaxSAT"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/EvalMaxSAT/src/mcqd.h">
+			<Option target="EvalMaxSAT"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/EvalMaxSAT/src/monglucose41.h">
+			<Option target="EvalMaxSAT"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/EvalMaxSAT/src/virtualcard.cpp">
+			<Option target="EvalMaxSAT"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/EvalMaxSAT/src/virtualcard.h">
+			<Option target="EvalMaxSAT"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/EvalMaxSAT/src/virtualmaxsat.h">
+			<Option target="EvalMaxSAT"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/EvalMaxSAT/src/virtualsat.cpp">
+			<Option target="EvalMaxSAT"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/EvalMaxSAT/src/virtualsat.h">
+			<Option target="EvalMaxSAT"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/MaLib/src/Chrono.h">
+			<Option target="MaLib"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/MaLib/src/View.h">
+			<Option target="MaLib"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/MaLib/src/communicationlist.h">
+			<Option target="MaLib"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/MaLib/src/coutUtil.h">
+			<Option target="MaLib"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/MaLib/src/main.cpp">
+			<Option target="MaLib"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/MaLib/src/math.h">
+			<Option target="MaLib"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/cadical/src/README.md">
+			<Option target="cadical"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/cadical/src/analyze.cpp">
+			<Option target="cadical"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/cadical/src/arena.cpp">
+			<Option target="cadical"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/cadical/src/arena.hpp">
+			<Option target="cadical"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/cadical/src/assume.cpp">
+			<Option target="cadical"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/cadical/src/averages.cpp">
+			<Option target="cadical"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/cadical/src/averages.hpp">
+			<Option target="cadical"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/cadical/src/backtrack.cpp">
+			<Option target="cadical"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/cadical/src/backward.cpp">
+			<Option target="cadical"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/cadical/src/bins.cpp">
+			<Option target="cadical"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/cadical/src/bins.hpp">
+			<Option target="cadical"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/cadical/src/block.cpp">
+			<Option target="cadical"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/cadical/src/block.hpp">
+			<Option target="cadical"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/cadical/src/cadical.cpp">
+			<Option target="cadical"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/cadical/src/cadical.hpp">
+			<Option target="cadical"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/cadical/src/ccadical.cpp">
+			<Option target="cadical"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/cadical/src/ccadical.h">
+			<Option target="cadical"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/cadical/src/checker.cpp">
+			<Option target="cadical"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/cadical/src/checker.hpp">
+			<Option target="cadical"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/cadical/src/clause.cpp">
+			<Option target="cadical"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/cadical/src/clause.hpp">
+			<Option target="cadical"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/cadical/src/collect.cpp">
+			<Option target="cadical"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/cadical/src/compact.cpp">
+			<Option target="cadical"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/cadical/src/condition.cpp">
+			<Option target="cadical"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/cadical/src/config.cpp">
+			<Option target="cadical"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/cadical/src/config.hpp">
+			<Option target="cadical"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/cadical/src/constrain.cpp">
+			<Option target="cadical"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/cadical/src/contract.cpp">
+			<Option target="cadical"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/cadical/src/contract.hpp">
+			<Option target="cadical"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/cadical/src/cover.cpp">
+			<Option target="cadical"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/cadical/src/cover.hpp">
+			<Option target="cadical"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/cadical/src/decide.cpp">
+			<Option target="cadical"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/cadical/src/decompose.cpp">
+			<Option target="cadical"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/cadical/src/deduplicate.cpp">
+			<Option target="cadical"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/cadical/src/elim.cpp">
+			<Option target="cadical"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/cadical/src/elim.hpp">
+			<Option target="cadical"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/cadical/src/ema.cpp">
+			<Option target="cadical"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/cadical/src/ema.hpp">
+			<Option target="cadical"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/cadical/src/extend.cpp">
+			<Option target="cadical"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/cadical/src/external.cpp">
+			<Option target="cadical"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/cadical/src/external.hpp">
+			<Option target="cadical"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/cadical/src/file.cpp">
+			<Option target="cadical"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/cadical/src/file.hpp">
+			<Option target="cadical"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/cadical/src/flags.cpp">
+			<Option target="cadical"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/cadical/src/flags.hpp">
+			<Option target="cadical"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/cadical/src/format.cpp">
+			<Option target="cadical"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/cadical/src/format.hpp">
+			<Option target="cadical"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/cadical/src/gates.cpp">
+			<Option target="cadical"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/cadical/src/heap.hpp">
+			<Option target="cadical"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/cadical/src/instantiate.cpp">
+			<Option target="cadical"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/cadical/src/instantiate.hpp">
+			<Option target="cadical"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/cadical/src/internal.cpp">
+			<Option target="cadical"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/cadical/src/internal.hpp">
+			<Option target="cadical"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/cadical/src/inttypes.hpp">
+			<Option target="cadical"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/cadical/src/ipasir.cpp">
+			<Option target="cadical"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/cadical/src/ipasir.h">
+			<Option target="cadical"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/cadical/src/level.hpp">
+			<Option target="cadical"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/cadical/src/limit.cpp">
+			<Option target="cadical"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/cadical/src/limit.hpp">
+			<Option target="cadical"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/cadical/src/logging.cpp">
+			<Option target="cadical"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/cadical/src/logging.hpp">
+			<Option target="cadical"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/cadical/src/lookahead.cpp">
+			<Option target="cadical"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/cadical/src/lucky.cpp">
+			<Option target="cadical"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/cadical/src/message.cpp">
+			<Option target="cadical"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/cadical/src/message.hpp">
+			<Option target="cadical"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/cadical/src/minimize.cpp">
+			<Option target="cadical"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/cadical/src/mobical.cpp">
+			<Option target="cadical"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/cadical/src/observer.hpp">
+			<Option target="cadical"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/cadical/src/occs.cpp">
+			<Option target="cadical"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/cadical/src/occs.hpp">
+			<Option target="cadical"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/cadical/src/options.cpp">
+			<Option target="cadical"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/cadical/src/options.hpp">
+			<Option target="cadical"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/cadical/src/parse.cpp">
+			<Option target="cadical"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/cadical/src/parse.hpp">
+			<Option target="cadical"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/cadical/src/phases.cpp">
+			<Option target="cadical"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/cadical/src/phases.hpp">
+			<Option target="cadical"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/cadical/src/probe.cpp">
+			<Option target="cadical"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/cadical/src/profile.cpp">
+			<Option target="cadical"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/cadical/src/profile.hpp">
+			<Option target="cadical"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/cadical/src/proof.cpp">
+			<Option target="cadical"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/cadical/src/proof.hpp">
+			<Option target="cadical"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/cadical/src/propagate.cpp">
+			<Option target="cadical"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/cadical/src/queue.cpp">
+			<Option target="cadical"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/cadical/src/queue.hpp">
+			<Option target="cadical"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/cadical/src/radix.hpp">
+			<Option target="cadical"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/cadical/src/random.cpp">
+			<Option target="cadical"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/cadical/src/random.hpp">
+			<Option target="cadical"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/cadical/src/range.hpp">
+			<Option target="cadical"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/cadical/src/reap.cpp">
+			<Option target="cadical"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/cadical/src/reap.hpp">
+			<Option target="cadical"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/cadical/src/reduce.cpp">
+			<Option target="cadical"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/cadical/src/reluctant.hpp">
+			<Option target="cadical"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/cadical/src/rephase.cpp">
+			<Option target="cadical"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/cadical/src/report.cpp">
+			<Option target="cadical"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/cadical/src/resources.cpp">
+			<Option target="cadical"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/cadical/src/resources.hpp">
+			<Option target="cadical"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/cadical/src/restart.cpp">
+			<Option target="cadical"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/cadical/src/restore.cpp">
+			<Option target="cadical"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/cadical/src/score.cpp">
+			<Option target="cadical"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/cadical/src/score.hpp">
+			<Option target="cadical"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/cadical/src/shrink.cpp">
+			<Option target="cadical"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/cadical/src/signal.cpp">
+			<Option target="cadical"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/cadical/src/signal.hpp">
+			<Option target="cadical"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/cadical/src/solution.cpp">
+			<Option target="cadical"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/cadical/src/solver.cpp">
+			<Option target="cadical"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/cadical/src/stats.cpp">
+			<Option target="cadical"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/cadical/src/stats.hpp">
+			<Option target="cadical"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/cadical/src/subsume.cpp">
+			<Option target="cadical"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/cadical/src/terminal.cpp">
+			<Option target="cadical"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/cadical/src/terminal.hpp">
+			<Option target="cadical"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/cadical/src/ternary.cpp">
+			<Option target="cadical"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/cadical/src/tracer.cpp">
+			<Option target="cadical"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/cadical/src/tracer.hpp">
+			<Option target="cadical"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/cadical/src/transred.cpp">
+			<Option target="cadical"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/cadical/src/util.cpp">
+			<Option target="cadical"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/cadical/src/util.hpp">
+			<Option target="cadical"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/cadical/src/var.cpp">
+			<Option target="cadical"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/cadical/src/var.hpp">
+			<Option target="cadical"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/cadical/src/version.cpp">
+			<Option target="cadical"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/cadical/src/version.hpp">
+			<Option target="cadical"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/cadical/src/vivify.cpp">
+			<Option target="cadical"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/cadical/src/vivify.hpp">
+			<Option target="cadical"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/cadical/src/walk.cpp">
+			<Option target="cadical"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/cadical/src/watch.cpp">
+			<Option target="cadical"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/cadical/src/watch.hpp">
+			<Option target="cadical"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/EvalMaxSAT/CMakeLists.txt">
+			<Option virtualFolder="CMake Files\"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/EvalMaxSAT/../MaLib/CMakeLists.txt">
+			<Option virtualFolder="CMake Files\..\MaLib\"/>
+		</Unit>
+		<Unit filename="/home/carle/.ssh/CadicalEval/lib/EvalMaxSAT/../cadical/CMakeLists.txt">
+			<Option virtualFolder="CMake Files\..\cadical\"/>
+		</Unit>
+	</Project>
+</CodeBlocks_project_file>

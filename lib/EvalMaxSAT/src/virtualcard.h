@@ -15,11 +15,7 @@ protected:
     unsigned int nbLit;
     unsigned int bound;
 
-    unsigned int newVar();
-    void addClause(const std::vector<int> & clause);
-
-    bool getValue(int lit);
-    void setDecisionVar(unsigned int var, bool value);
+    unsigned int newVar(int lit);
 
 public:
 
@@ -33,8 +29,6 @@ public:
     virtual int operator <= (unsigned int k) {
         return atMost(k);
     }
-
-    //virtual std::vector<int> getClause() {assert(!"TODO");}
 
     virtual unsigned int size() const {
         return nbLit;

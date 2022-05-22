@@ -33,18 +33,17 @@ static void readClause(B& in, std::vector<int>& lits) {
     int parsed_lit;
     lits.clear();
     for (;;){
-        parsed_lit = Glucose::parseInt(in);
+        parsed_lit = parseInt(in);
         if (parsed_lit == 0) break;
         lits.push_back( parsed_lit );
     }
 }
 
-
 long calculateCost(const std::string & file, const std::vector<bool> &result) {
     long cost = 0;
     auto in_ = gzopen(file.c_str(), "rb");
 
-                Glucose::StreamBuffer in(in_);
+                StreamBuffer in(in_);
 
                 bool weighted = true;
                 int64_t top = -1;
@@ -55,17 +54,17 @@ long calculateCost(const std::string & file, const std::vector<bool> &result) {
                 int inClauses = 0;
                 int count = 0;
                 for(;;) {
-                    Glucose::skipWhitespace(in);
+                    skipWhitespace(in);
 
                     if(*in == EOF)
                         break;
 
                     else if(*in == 'c')
-                        Glucose::skipLine(in);
+                        skipLine(in);
                     else {
                         count++;
                         if(weighted)
-                            weight = Glucose::parseInt64(in);
+                            weight = parseInt64(in);
                         readClause(in, lits);
                         if(weight == 0) {
                             bool sat=false;
@@ -99,7 +98,6 @@ long calculateCost(const std::string & file, const std::vector<bool> &result) {
 }
 
 
-
 int main(int argc, char *argv[]) {
 
     for(unsigned int id = 0; id<data_unweighted.size(); id++) {
@@ -107,8 +105,8 @@ int main(int argc, char *argv[]) {
 
         monMaxSat = new EvalMaxSAT();
 
-        std::string filePath = "./" + data_unweighted[id]; // For a custom path
-
+        std::string filePath = "/media/carle/UQAM/Recherche/2022_files/" + data_unweighted[id]; // For a custom path
+        //filePath = "/media/carle/UQAM/Recherche/2022_files/simp-cf_15.03.wcnf.gz"; data_unweighted_cost[id] = 18;
         MaLib::Chrono C( filePath);
 
         auto in = gzopen( filePath.c_str(), "rb");
@@ -117,7 +115,9 @@ int main(int argc, char *argv[]) {
             assert(false);
             return -1;
         }
+
         gzclose(in);
+
         if(!monMaxSat->solve()) {
             std::cerr << "Pas de solution ?!?" << std::endl;
             assert(false);
@@ -128,15 +128,14 @@ int main(int argc, char *argv[]) {
             std::cerr << "id = " << id << std::endl;
             std::cerr << "file = " << filePath << std::endl;
             std::cerr << "Résultat éroné : \n   Trouvé : " << monMaxSat->getCost() << "\n  Attendu : " << data_unweighted_cost[id] << std::endl;
-
             std::vector<bool> assign;
             assign.push_back(0); // fake var_0
 
             for(unsigned int i=1; i<=data_unweighted_nVars[id]; i++) {
                 assign.push_back(monMaxSat->getValue(i));
             }
-            std::cerr << " RealCost = " << calculateCost( filePath, assign) << std::endl;
 
+            std::cerr << " RealCost = " << calculateCost( filePath, assign) << std::endl;
 
             assert(false);
             return -1;
@@ -153,9 +152,8 @@ int main(int argc, char *argv[]) {
             }
             assert( calculateCost( filePath, assign) == monMaxSat->getCost() );
         }
-
         delete monMaxSat;
-        break;  // TODO: !!! REMOVE !!!
+        //break;  // TODO: !!! REMOVE !!!
     }
 }
 

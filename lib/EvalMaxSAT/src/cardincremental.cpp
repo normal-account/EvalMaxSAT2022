@@ -87,7 +87,7 @@ void CardIncremental_Lazy::increase_ua( std::vector< std::shared_ptr<LazyVariabl
 
     unsigned maxi = std::min(rhs, (unsigned)aVars.size());
     for (unsigned i = last; i < maxi; ++i) {
-        //addClause({-aVars[i], ogVars[i]});
+        //addUnitClause({-aVars[i], ogVars[i]});
         ogVars[i]->addImpliquant( {aVars[i]});
     }
 

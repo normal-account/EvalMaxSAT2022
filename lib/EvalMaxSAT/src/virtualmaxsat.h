@@ -4,20 +4,21 @@
 #include <vector>
 #include "virtualsat.h"
 #include <set>
-
-#include "glucose/utils/ParseUtils.h"
+#include <fstream>
+#include "../../cadical/src/cadical.hpp"
+#include "../../cadical/src/file.hpp"
+#include "ParseUtils.h"
 
 class VirtualMAXSAT : public VirtualSAT {
 public:
-    std::vector<bool> literalPresent; // Vector storing all encountered vars
+   int nVars = 0;
+   std::vector < std::tuple < std::vector<int>, int> > softClauses;
+   std::vector<std::vector<int>> hardClauses;
 
-   // Save clauses in a vector to add them to the solver after adding the variables
-    std::vector<std::tuple<std::vector<int>, int>> softClauses;
-    std::vector<std::vector<int>> hardClauses;
 
     virtual ~VirtualMAXSAT();
 
-    virtual unsigned int newSoftVar(bool value, bool decisionVar, unsigned int weight) = 0;
+    virtual unsigned int newSoftVar(bool value, unsigned int weight) = 0;
 
     virtual bool isSoft(unsigned int var) = 0;
 
@@ -37,91 +38,90 @@ public:
 
                 // Return instantly instead of adding a new var at the end because the soft var represents the unit clause anyway.
                 // However, if the soft var already exists as soft, then we don't want to return as we want a new var to represent the 2nd clause.
-                return clause[0];
+                return 0;
             }
         }
 
         // Soft clauses are "hard" clauses with a soft var at the end. Create said soft var for our clause.
-        int r = static_cast<int>(newSoftVar(true, false, weight));
-
-        clause.push_back(-r);
-        addClause(clause);
+        int r = static_cast<int>(newSoftVar(true, weight));
 
         return r;
     }
 
-    void addAllLiterals () {
-        for (int i = 0; i < literalPresent.size(); i++) {
-            newVar();
-        }
-        literalPresent.clear();
-    }
 
-    void addAllClauses() {
-        for (const auto& clause : hardClauses)
-            addClause(clause);
+   void addAllClauses() {
+       for (int i = 0; i < nVars; i++)
+           pushVar();
 
-        for (auto clauseTuple : softClauses)
-            addWeightedClause(std::get<0>(clauseTuple), std::get<1>(clauseTuple));
-        hardClauses.clear();
-        softClauses.clear();
-    }
+       for (auto &hardClause : hardClauses) {
+           for (int j : hardClause) {
+               newVar(j);
+           }
+           newVar(0);
+       }
 
-    bool parse(gzFile in_) {
+       for (auto &softTuple : softClauses) {
+           std::vector<int> &softClause = std::get<0>(softTuple);
 
-        Glucose::StreamBuffer in(in_);
+           int softVar = addWeightedClause(softClause, std::get<1>(softTuple));
+           if (softVar) {
+               for (int var : softClause) {
+                   newVar(var);
+               }
 
-        int64_t weight;
+               newVar(-softVar);
+               newVar(0);
+           }
 
-        std::vector<int> lits;
-        int count = 0;
-        for(;;) {
-            Glucose::skipWhitespace(in);
+       }
+       hardClauses.clear();
+       softClauses.clear();
+   }
 
-            if(*in == EOF)
-            {
-                addAllLiterals();
-                addAllClauses();
-                break;
-            }
+   void readClause(StreamBuffer &in, std::vector<int> &lits) {
+       int lit;
+       for (;;) {
+           lit = parseInt(in);
 
-            else if(*in == 'c')
-                Glucose::skipLine(in);
-            else {
-                count++;
+           if (lit == 0)
+               break;
+           lits.push_back(lit);
+           if (abs(lit) > nVars)
+               nVars = abs(lit);
+       }
+   }
 
-                weight = Glucose::parseInt64(in);
+   bool parse(gzFile in_) {
+       StreamBuffer in(in_);
 
-                readClause(in, lits);
+       std::vector<int> lits;
+       int count = 0;
+       for(;;) {
+           skipWhitespace(in);
 
-                if(weight == 0) {
-                    hardClauses.push_back(lits);
-                } else {
-                    softClauses.push_back( {lits, weight} );
-                }
-            }
-        }
+           if(*in == EOF)
+           {
+               addAllClauses();
+               return true;
+           }
 
-        return true;
-    }
+           if(*in == 'c')
+               skipLine(in);
+           else {
+               count++;
+               lits.clear();
 
-private:
+               int weight = parseInt64(in);
 
-    template<class B>
-    void readClause(B& in, std::vector<int>& lits) {
-        int parsed_lit;
-        lits.clear();
-        for (;;){
-            parsed_lit = Glucose::parseInt(in);
-            if (parsed_lit == 0) break;
+               readClause(in, lits);
 
-            if ( abs(parsed_lit) >= literalPresent.size())  // TODO: REVISIT STRUCTURE
-                literalPresent.resize(abs(parsed_lit));
-
-            literalPresent[ abs(parsed_lit) ] = true;
-
-            lits.push_back( parsed_lit );
-        }
+               if(weight == 0) {
+                   hardClauses.push_back(lits);
+               } else {
+                   softClauses.push_back( {lits, weight} );
+               }
+           }
+       }
     }
 
 };

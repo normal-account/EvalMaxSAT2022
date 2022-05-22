@@ -15,7 +15,7 @@ file(
 
 set(localLibs
 	MaLib
-        glucose
+        cadical
 )
 
 

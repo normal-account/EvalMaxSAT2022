@@ -11,7 +11,7 @@
 #include "coutUtil.h"
 #include "virtualmaxsat.h"
 #include "virtualsat.h"
-#include "monglucose41.h"
+#include "cadicalinterface.h"
 #include "mcqd.h"
 #include "coutUtil.h"
 
@@ -24,6 +24,8 @@ class EvalMaxSAT : public VirtualMAXSAT {
     VirtualSAT *solver = nullptr;
     std::vector<VirtualSAT*> solverForMinimize;
 
+    int nVars = 0;
+    int nVarsInSolver;
 
     std::vector<unsigned int> _weight; // Weight of var at index, 0 if hard
     std::vector<bool> model; // Sign of var at index
@@ -67,276 +69,286 @@ class EvalMaxSAT : public VirtualMAXSAT {
         adapt_am1_FastHeuristicV7();
     }
 
-    void reduceCliqueV2(std::list<int> & clique) {
-        for(auto posImpliquant = clique.begin() ; posImpliquant != clique.end() ; ++posImpliquant) {
-            auto posImpliquant2 = posImpliquant;
-            for(++posImpliquant2 ; posImpliquant2 != clique.end() ; ) {
-                if(solver->solveLimited(std::vector<int>({-(*posImpliquant), -(*posImpliquant2)}), 10000) != -1) {
-                    posImpliquant2 = clique.erase(posImpliquant2);
-                } else {
-                    ++posImpliquant2;
-                }
-            }
-        }
-    }
+   void reduceCliqueV2(std::list<int> & clique) {
+       for(auto posImpliquant = clique.begin() ; posImpliquant != clique.end() ; ++posImpliquant) {
+           auto posImpliquant2 = posImpliquant;
+           for(++posImpliquant2 ; posImpliquant2 != clique.end() ; ) {
+               if(solver->solveLimited(std::vector<int>({-(*posImpliquant), -(*posImpliquant2)}), 10000) != -1) {
+                   posImpliquant2 = clique.erase(posImpliquant2);
+               } else {
+                   ++posImpliquant2;
+               }
+           }
+       }
+   }
 
-    bool adapt_am1_FastHeuristicV7() {
-        MonPrint("adapt_am1_FastHeuristic");
-        Chrono chrono;
-        std::vector<int> prop;
-        unsigned int nbCliqueFound=0;
+   bool adapt_am1_FastHeuristicV7() {
+       MonPrint("adapt_am1_FastHeuristic");
+       Chrono chrono;
+       std::vector<int> prop;
+       unsigned int nbCliqueFound=0;
 
-        for(unsigned int VAR = 1; VAR<_weight.size(); VAR++) {
-            if(_weight[VAR] == 0)
-                continue;
+       // Where nVarsInSolver represents the number of vars before the cardinality constraints. We don't want to
+       // propagate soft vars representing cardinality constraints.
+       for(unsigned int VAR = 1; VAR<nVarsInSolver; VAR++) {
+           if(_weight[VAR] == 0)
+               continue;
 
-            assert(_weight[VAR] > 0);
-            int LIT = model[VAR]?static_cast<int>(VAR):-static_cast<int>(VAR);
-            prop.clear();
-            if(solver->propagate({LIT}, prop)) {
-                if(prop.size() == 0)
-                    continue;
-                assert(*prop.begin() == LIT);
-                if(prop.size() == 1)
-                    continue;
+           assert(_weight[VAR] > 0);
+           int LIT = model[VAR]?static_cast<int>(VAR):-static_cast<int>(VAR);
+           prop.clear();
+           if(solver->propagate({LIT}, prop)) {
+               if(prop.size() == 0)
+                   continue;
+               if(prop.size() == 1)
+                   continue;
 
-                std::list<int> clique;
-                for(auto litProp: prop) {
-                    if(isInAssum(-litProp)) {
-                        clique.push_back(litProp);
-                        assert(solver->solve(std::vector<int>({-litProp, LIT})) == false);
-                    }
-                }
+               std::list<int> clique;
+               for(auto litProp: prop) {
+                   if(isInAssum(-litProp)) {
+                       clique.push_back(litProp);
+                       assert(solver->solve(std::vector<int>({-litProp, LIT})) == false);
+                   }
+               }
 
-                if(clique.size() == 0)
-                    continue;
+               if(clique.size() == 0)
+                   continue;
 
-                reduceCliqueV2(clique); // retirer des elements pour que clique soit une clique
+               reduceCliqueV2(clique); // retirer des elements pour que clique soit une clique
 
-                clique.push_back(-LIT);
+               clique.push_back(-LIT);
 
-                if(clique.size() >= 2) {
-                    nbCliqueFound++;
+               if(clique.size() >= 2) {
+                   nbCliqueFound++;
 
-                    std::vector<int> clause;
-                    for(auto lit: clique)
-                        clause.push_back(-lit);
+                   std::vector<int> clause;
+                   for(auto lit: clique)
+                       clause.push_back(-lit);
 
-                    processAMk(clause, 1);
-                }
-            } else {
-                addClause({-LIT});
-            }
-        }
+                   processAMk(clause, 1);
+               }
+           } else {
+               addUnitClause( -LIT );
+           }
+       }
 
-        MonPrint(nbCliqueFound, " cliques found in ", chrono.tac() / 1000, "ms.");
-        return true;
-    }
+       MonPrint(nbCliqueFound, " cliques found in ", chrono.tac() / 1000, "ms.");
+       return true;
+   }
 
-    bool adapt_am1_exact() {
-        Chrono chrono;
-        unsigned int nbCliqueFound=0;
-        std::vector<int> assumption;
+   bool adapt_am1_exact() {
+       Chrono chrono;
+       unsigned int nbCliqueFound=0;
+       std::vector<int> assumption;
 
-        for(unsigned int i=1; i<_weight.size(); i++) {
-            if(_weight[i] > 0) {
-                if(model[i]) {
-                    assumption.push_back(static_cast<int>(i));
-                } else {
-                    assumption.push_back(-static_cast<int>(i));
-                }
-            }
-        }
+       for(unsigned int i=1; i<_weight.size(); i++) {
+           if(_weight[i] > 0) {
+               if(model[i]) {
+                   assumption.push_back(static_cast<int>(i));
+               } else {
+                   assumption.push_back(-static_cast<int>(i));
+               }
+           }
+       }
 
-        MonPrint("Nombre d'assumption: ", assumption.size());
+       MonPrint("Nombre d'assumption: ", assumption.size());
 
-        if(assumption.size() > 30000) { // hyper paramétre
-            MonPrint("skip");
-            return false;
-        }
+       if(assumption.size() > 30000) { // hyper paramétre
+           MonPrint("skip");
+           return false;
+       }
 
-        MonPrint("Create graph for searching clique...");
-        unsigned int size = assumption.size();
-        bool **conn = new bool*[size];
-        for(unsigned int i=0; i<size; i++) {
-            conn[i] = new bool[size];
-            for(unsigned int x=0; x<size; x++)
-                conn[i][x] = false;
-        }
+       MonPrint("Create graph for searching clique...");
+       unsigned int size = assumption.size();
+       bool **conn = new bool*[size];
+       for(unsigned int i=0; i<size; i++) {
+           conn[i] = new bool[size];
+           for(unsigned int x=0; x<size; x++)
+               conn[i][x] = false;
+       }
 
-        MonPrint("Create link in graph...");
-        for(unsigned int i=0; i<size; ) {
-            int lit1 = assumption[i];
-
-            std::vector<int> prop;
-            if(solver->propagate({lit1}, prop)) {
-                for(int lit2: prop) {
-                    for(unsigned int j=0; j<size; j++) {
-                        if(j==i)
-                            continue;
-                        if(assumption[j] == -lit2) {
-                            conn[i][j] = true;
-                            conn[j][i] = true;
-                        }
-                    }
-                }
-                i++;
-            } else {
-                addClause({-lit1});
-
-                assumption[i] = assumption.back();
-                assumption.pop_back();
-
-                for(unsigned int x=0; x<size; x++) {
-                    conn[i][x] = false;
-                    conn[x][i] = false;
-                }
-
-                size--;
-            }
-        }
+       MonPrint("Create link in graph...");
+       for(unsigned int i=0; i<size; ) {
+           int lit1 = assumption[i];
 
 
-        if(size == 0) {
-            for(unsigned int i=0; i<size; i++) {
-                delete conn[i];
-            }
-            delete [] conn;
-            return true;
-        }
+           std::vector<int> prop;
+           // If literal in assumptions has a value that is resolvable, get array of all the other literals that must have
+           // a certain value in consequence, then link said literal to the opposite value of these other literals in graph
 
-        std::vector<bool> active(size, true);
-        for(;;) {
-            int *qmax;
-            int qsize=0;
-            Maxclique md(conn, size, 0.025);
-            md.mcqdyn(qmax, qsize, 100000);
+           if(solver->propagate({lit1}, prop)) {
+               for(int lit2: prop) {
+                   for(unsigned int j=0; j<size; j++) {
+                       if(j==i)
+                           continue;
+                       if(assumption[j] == -lit2) {
+                           conn[i][j] = true;
+                           conn[j][i] = true;
+                       }
+                   }
+               }
+               i++;
+           } else { // No solution - Remove literal from the assumptions and add its opposite as a clause
+               addUnitClause( -lit1 );
 
-            if(qsize <= 2) { // Hyperparametre: Taille minimal a laquelle arreter la methode exact
-                for(unsigned int i=0; i<size; i++) {
-                    delete conn[i];
-                }
-                delete [] conn;
-                delete qmax;
+               assumption[i] = assumption.back();
+               assumption.pop_back();
 
-                MonPrint(nbCliqueFound, " cliques found in ", (chrono.tac() / 1000), "ms.");
-                return true;
-            }
-            nbCliqueFound++;
+               for(unsigned int x=0; x<size; x++) {
+                   conn[i][x] = false;
+                   conn[x][i] = false;
+               }
 
-            {
-                int newI=qmax[0];
-                std::vector<int> clause;
+               size--;
+           }
+       }
 
-                for (unsigned int i = 0; i < qsize; i++) {
-                    int lit = assumption[qmax[i]];
-                    active[qmax[i]] = false;
-                    clause.push_back(lit);
 
-                    for(unsigned int x=0; x<size; x++) {
-                        conn[qmax[i]][x] = false;
-                        conn[x][qmax[i]] = false;
-                    }
-                }
-                auto newAssum = processAMk(clause, 1);
-                assert(qsize >= newAssum.size());
+       if(size == 0) {
+           for(unsigned int i=0; i<size; i++) {
+               delete conn[i];
+           }
+           delete [] conn;
+           return true;
+       }
 
-                for(unsigned int j=0; j<newAssum.size() ; j++) {
-                    assumption[ qmax[j] ] = newAssum[j];
-                    active[ qmax[j] ] = true;
+       std::vector<bool> active(size, true);
+       for(;;) {
+           int *qmax;
+           int qsize=0;
+           Maxclique md(conn, size, 0.025);
+           md.mcqdyn(qmax, qsize, 100000);
 
-                    std::vector<int> prop;
-                    if(solver->propagate({newAssum[j]}, prop)) {
-                        for(int lit2: prop) {
-                            for(unsigned int j=0; j<size; j++) {
-                                if(active[j]) {
-                                    if(assumption[j] == -lit2) {
-                                        conn[newI][j] = true;
-                                        conn[j][newI] = true;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+           if(qsize <= 2) { // Hyperparametre: Taille minimal a laquelle arreter la methode exact
+               for(unsigned int i=0; i<size; i++) {
+                   delete conn[i];
+               }
+               delete [] conn;
+               delete qmax;
 
-            delete qmax;
-        }
+               MonPrint(nbCliqueFound, " cliques found in ", (chrono.tac() / 1000), "ms.");
+               return true;
+           }
+           nbCliqueFound++;
 
-        assert(false);
-    }
+           {
+               int newI=qmax[0];
+               std::vector<int> clause;
 
-    template<class T>
-    std::vector<int> processAMk(const T &clause, unsigned int am) {
-        std::vector<int> newAssum;
+               for (unsigned int i = 0; i < qsize; i++) {
+                   int lit = assumption[qmax[i]];
+                   active[qmax[i]] = false;
+                   clause.push_back(lit);
 
-        assert(am < clause.size());
-        assert(am > 0);
+                   for(unsigned int x=0; x<size; x++) {
+                       conn[qmax[i]][x] = false;
+                       conn[x][qmax[i]] = false;
+                   }
+               }
+               auto newAssum = processAMk(clause, 1);
+               assert(qsize >= newAssum.size());
 
-        unsigned int k = clause.size()-am;
+               for(unsigned int j=0; j<newAssum.size() ; j++) {
+                   assumption[ qmax[j] ] = newAssum[j];
+                   active[ qmax[j] ] = true;
 
-        int newAssumForCard = 0;
+                   std::vector<int> prop;
+                   if(solver->propagate({newAssum[j]}, prop)) {
+                       for(int lit2: prop) {
+                           for(unsigned int j=0; j<size; j++) {
+                               if(active[j]) {
+                                   if(assumption[j] == -lit2) {
+                                       conn[newI][j] = true;
+                                       conn[j][newI] = true;
+                                   }
+                               }
+                           }
+                       }
+                   }
+               }
+           }
 
-        assert(clause.size() > 1);
+           delete qmax;
+       }
 
-        std::vector<int> L;
-        for(auto lit: clause) {
-            assert(lit!=0);
-            unsigned int var = static_cast<unsigned int>(abs(lit));
+       assert(false);
+   }
 
-            L.push_back(-lit);
-            _weight[var] = 0;
 
-            if(mapAssum2card[var] != -1) {
-                int tmp = mapAssum2card[var];
-                assert(tmp >= 0);
+   // Harden soft vars in passed clique to then unrelax them via a new cardinality constraint
+   template<class T>
+   std::vector<int> processAMk(const T &clause, unsigned int am) {
+       std::vector<int> newAssum;
 
-                std::get<1>(save_card[tmp])++;
-                int forCard = (*std::get<0>(save_card[tmp]) <= std::get<1>(save_card[tmp]));
+       assert(am < clause.size());
+       assert(am > 0);
 
-                if(forCard != 0) {
-                    newAssum.push_back(forCard);
-                    _weight[abs(forCard)] = 1;
-                    mapAssum2card[ abs(forCard) ] = tmp;
-                }
-            }
-        }
+       unsigned int k = clause.size()-am;
 
-        assert(L.size()>1);
-        assert(k < L.size());
+       int newAssumForCard = 0;
 
-        cost += k;
-        MonPrint("cost = ", cost);
+       assert(clause.size() > 1);
 
-        if(L.size() == 2) { // Optional, just to no add useless card to save_card
-            newAssum.push_back( addWeightedClause( {-L[0], -L[1]}, 1 ) );
-            return newAssum;
-        }
+       std::vector<int> L;
+       for(auto lit: clause) {
+           assert(lit!=0);
+           unsigned int var = static_cast<unsigned int>(abs(lit));
 
-        save_card.push_back( {newCard(L, k), k} );
-        newAssumForCard = (*std::get<0>(save_card.back()) <= std::get<1>(save_card.back()));
+           L.push_back(-lit);
+           _weight[var] = 0;
 
-        if(newAssumForCard != 0) {
-            newAssum.push_back(newAssumForCard);
-            _weight[abs(newAssumForCard)] = 1;
-            mapAssum2card[abs(newAssumForCard)] = save_card.size()-1;
-        }
+           if(mapAssum2card[var] != -1) {
+               int tmp = mapAssum2card[var];
+               assert(tmp >= 0);
 
-        return newAssum;
-    }
-    ///////////////////////////
+               std::get<1>(save_card[tmp])++;
+               int forCard = (*std::get<0>(save_card[tmp]) <= std::get<1>(save_card[tmp]));
+
+               if(forCard != 0) {
+                   newAssum.push_back(forCard);
+                   _weight[abs(forCard)] = 1;
+                   mapAssum2card[ abs(forCard) ] = tmp;
+               }
+           }
+       }
+
+       assert(L.size()>1);
+       assert(k < L.size());
+
+       cost += k;
+       MonPrint("cost = ", cost);
+
+       // The following lines caused cost issues with Cadical - to revisit
+       /*if(L.size() == 2) { // Optional, just to no add useless card to save_card
+           newAssum.push_back( addWeightedClause( {-L[0], -L[1]}, 1 ) );
+           return newAssum;
+       }*/
+
+       save_card.push_back( {newCard(L, k), k} );
+       newAssumForCard = (*std::get<0>(save_card.back()) <= std::get<1>(save_card.back()));
+
+       if(newAssumForCard != 0) {
+           newAssum.push_back(newAssumForCard);
+           _weight[abs(newAssumForCard)] = 1;
+           mapAssum2card[abs(newAssumForCard)] = save_card.size()-1;
+       }
+
+       return newAssum;
+   }
+   ///////////////////////////
+
+
 
 
 
 
 public:
     EvalMaxSAT(unsigned int nbMinimizeThread=0, VirtualSAT *solver =
-            new MonGlucose41()
+            new CadicalInterface()
     ) : nbMinimizeThread(nbMinimizeThread), solver(solver)
     {
         for(unsigned int i=0; i<nbMinimizeThread; i++) {
-            solverForMinimize.push_back(new MonGlucose41());
+            solverForMinimize.push_back(new CadicalInterface());
         }
 
         _weight.push_back(0);           //
@@ -346,24 +358,33 @@ public:
 
     virtual ~EvalMaxSAT();
 
-    virtual void addClause(const std::vector<int> &vclause) {
-        if(vclause.size() == 1) {
-            unsigned int var1 = abs(vclause[0]);
-            // Increase cost now if the variable exists as a soft one and its sign is different
-            if( _weight[var1] > 0 ) {
-                if(model[var1] != (vclause[0] > 0)) {
-                    cost += _weight[var1];
-                    MonPrint("cost = ", cost);
-                }
-                _weight[var1] = 0;
+    virtual void addUnitClause( int lit ) {
+
+        unsigned int var1 = abs( lit );
+
+        // Increase cost now if the variable exists as a soft one and its sign is different
+        if( _weight[var1] > 0 ) {
+            if(model[var1] != ( lit > 0)) {
+                cost += _weight[var1];
+                MonPrint("cost = ", cost);
             }
+            _weight[var1] = 0;
         }
 
-        solver->addClause(vclause);
+        solver -> addUnitClause( lit );
         for(auto s: solverForMinimize) {
-            s->addClause(vclause);
+            s -> addUnitClause( lit );
         }
     }
+
+   void addClause( std::vector<int> &clause) override
+   {
+       solver -> addClause( clause );
+       for ( auto s : solverForMinimize )
+       {
+           s -> addClause( clause );
+       }
+   }
 
     virtual void simplify() {
         assert(!"TODO");
@@ -381,9 +402,6 @@ public:
         assert(!"TODO");
     }
 
-    virtual void setDecisionVar(unsigned int var, bool b) {
-        solver->setDecisionVar(var, b);
-    }
 
     bool isInAssum(int lit) {
         unsigned int var = static_cast<unsigned int>(abs(lit));
@@ -393,7 +411,6 @@ public:
         }
         return false;
     }
-
 
     private:
 
@@ -405,7 +422,7 @@ public:
         if(!doFastMinimize) {
             std::set<int> conflictMin(conflict.begin(), conflict.end());
             // TODO : Fix this.
-            completed = true; //fullMinimize(S, conflictMin, uselessLit, _coefMinimizeTime*refTime);
+            completed = true;//fullMinimize(S, conflictMin, uselessLit, _coefMinimizeTime*refTime);
 
             for(auto lit: conflictMin) {
                 L.push_back(-lit);
@@ -526,6 +543,8 @@ public:
         CL_LitToRelax.clear();
         CL_CardToAdd.clear();
 
+        nVarsInSolver = nVars; // Freeze nVarsInSolver in time
+
         MonPrint("\t\t\tMain Thread: extractAM...");
         extractAM();
 
@@ -558,8 +577,6 @@ public:
             assert(CL_LitToRelax.size()==0);
             assert(CL_CardToAdd.size()==0);
             numberMinimizeThreadRunning = nbMinimizeThread;
-
-            //auto s2 = solver->clone();
 
             bool firstSolve = true;
             for(;;) {
@@ -621,7 +638,7 @@ public:
                     MonPrint("\t\t\tMain Thread: Solve = false");
                     chronoLastSolve.pause(true);
 
-                    std::vector<int> bestUnminimizedConflict = solver->getConflict();
+                    std::vector<int> bestUnminimizedConflict = solver->getConflict(forSolve);
 
                     // Special case in which the core is empty, meaning no solution can be found
                     if(bestUnminimizedConflict.empty()) {
@@ -653,14 +670,14 @@ public:
                         assert(!res);
 
                         if( bestUnminimizedConflict.size() > solver->sizeConflict() ) {
-                            bestUnminimizedConflict = solver->getConflict();
+                            bestUnminimizedConflict = solver->getConflict(forSolve);
                         }
                     }
                     MonPrint("\t\t\tMain Thread: ", nbSecondSolve, " solves done in ", chronoForBreak.tacSec(), "sec");
 
                     std::list<int> conflictMin;
                     for(auto lit: bestUnminimizedConflict)
-                        conflictMin.push_back(-lit);
+                        conflictMin.push_back(lit);
 
                     bool doFullMinimize = true;
                     if((assumption.size() < 100000) && (conflictMin.size() > 1)) {
@@ -717,8 +734,6 @@ public:
                     assumption.insert(*element);
                 }
             }
-
-            //delete s2;
         }
 
     }
@@ -746,46 +761,45 @@ public:
         return solver->getValue(var);
     }
 
+    /*
     virtual unsigned int nVars() {
         return solver->nVars();
     }
 
     virtual unsigned int nClauses() {
         return solver->nClauses();
-    }
+    }*/
 
-    virtual unsigned int newSoftVar(bool value, bool decisionVar, unsigned int weight) {
-        assert(weight==1);
+    virtual unsigned int newSoftVar(bool value, unsigned int weight) {
         _weight.push_back(weight);
         mapAssum2card.push_back(-1);
         model.push_back(value);
+        nVars++;
 
-        unsigned int var = solver->newVar(decisionVar);
+        int lit = _weight.size() - 1;
+
+        /*newVar(lit); // TODO : Verify ...
         for(auto s: solverForMinimize) {
-            unsigned int var2 = s->newVar(decisionVar);
-            assert(var == var2);
-        }
+            s->newVar(lit);
+        }*/
 
-        assert(var == _weight.size()-1);
-
-        return var;
+        return lit;
     }
 
 
-    virtual unsigned int newVar(bool decisionVar=true) {
-        _weight.push_back(0);
-        mapAssum2card.push_back(-1);
-        model.push_back(false);
-
-        unsigned int var = solver->newVar(decisionVar);
+    virtual void newVar(int lit)
+    {
+        solver->newVar(lit);
         for(auto s: solverForMinimize) {
-            unsigned int var2 = s->newVar(decisionVar);
+            s->newVar(lit);
             assert(var == var2);
         }
-
-        assert(var == _weight.size()-1);
-
-        return var;
+    }
+    virtual void pushVar() {
+        _weight . push_back( 0 );
+        mapAssum2card . push_back( -1 );
+        model . push_back( false );
+        nVars++;
     }
 
     virtual bool isSoft(unsigned int var) {
@@ -882,22 +896,6 @@ private:
                     default:
                         assert(false);
                 }
-                /*
-                if((timeRef*numberMinimizeThreadRunning <= chrono.tac()) && (B > 100)) {
-                    MonPrint("\t\t\t\t\tfullMinimize: B=100");
-                    B=100;
-                }
-                if((timeRef*numberMinimizeThreadRunning*2 <= chrono.tac()) && (B > 0)) {
-                    MonPrint("\t\t\t\t\tfullMinimize: B=0");
-                    B=0;
-                }
-                */
-                /*
-                if( (chrono.tacSec() >= _timeOutFastMinimize) && (chrono.tac() >= timeRef*(numberMinimizeThreadRunning+1)) && (B > 10) ) {
-                    MonPrint("\t\t\t\t\tfullMinimize: B=10");
-                    B=10;
-                }
-                */
             }
 
             if(tmp_uselessLit.size() > uselessLit.size()) {
@@ -957,6 +955,7 @@ private:
         return true;
     }
 };
+
 
 
 EvalMaxSAT::~EvalMaxSAT() {
