@@ -26,10 +26,12 @@ public:
     CadicalInterface()
         : solver(new CaDiCaL::Solver()) {
     }
-
+    
     VirtualSAT* clone() override {
-        auto result = new CadicalInterface( static_cast<CaDiCaL::Solver*>(solver));
-        return result;
+        CaDiCaL::Solver *copySolver = new CaDiCaL::Solver;
+        solver->copy(*copySolver);
+        
+        return new CadicalInterface(copySolver);
     }
 
     ~CadicalInterface() override;
