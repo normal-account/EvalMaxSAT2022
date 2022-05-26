@@ -274,13 +274,11 @@ namespace {
 }
 template<typename ...T>
 void MonPrint(const T&... args) {
-/*
-    static std::mutex forPrint;
+    /*static std::mutex forPrint;
     {
         std::lock_guard lock(forPrint);
         std::cout << MonPrint_Chrono.tacSec() << ": " << toString(args...) << std::endl;
-    }
-*/
+    }*/
 }
 
 

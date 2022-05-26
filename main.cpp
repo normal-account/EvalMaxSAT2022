@@ -11,8 +11,6 @@
 #include "weighted_data.h"
 
 
-
-
 using namespace MaLib;
 
 EvalMaxSAT* monMaxSat = nullptr;
@@ -106,7 +104,6 @@ int main(int argc, char *argv[]) {
         monMaxSat = new EvalMaxSAT();
 
         std::string filePath = "/media/carle/UQAM/Recherche/2022_files/" + data_unweighted[id]; // For a custom path
-        //filePath = "/media/carle/UQAM/Recherche/2022_files/simp-cf_15.03.wcnf.gz"; data_unweighted_cost[id] = 18;
         MaLib::Chrono C( filePath);
 
         auto in = gzopen( filePath.c_str(), "rb");
@@ -153,7 +150,6 @@ int main(int argc, char *argv[]) {
             assert( calculateCost( filePath, assign) == monMaxSat->getCost() );
         }
         delete monMaxSat;
-        //break;  // TODO: !!! REMOVE !!!
     }
 }
 

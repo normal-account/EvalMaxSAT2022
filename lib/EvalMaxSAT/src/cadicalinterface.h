@@ -28,8 +28,10 @@ public:
     }
 
     VirtualSAT* clone() override {
-        auto result = new CadicalInterface( static_cast<CaDiCaL::Solver*>(solver));
-        return result;
+        CaDiCaL::Solver *copySolver = new CaDiCaL::Solver;
+        solver->copy(*copySolver);
+        
+        return new CadicalInterface(copySolver);
     }
 
     ~CadicalInterface() override;
@@ -59,10 +61,10 @@ public:
     std::vector<int> getConflict(const std::vector<int> &assumptions) override {
         std::vector<int> conflicts;
         int nConflicts = 0;
-        for (int i = 0; i < assumptions.size(); i++) {
-            if (solver->failed(assumptions[i])) {
+        for (int assumption : assumptions) {
+            if (solver->failed(assumption)) {
                 nConflicts++;
-                conflicts.push_back(assumptions[i]);
+                conflicts.push_back(assumption);
             }
         }
         conflictSize = nConflicts;
@@ -79,6 +81,8 @@ public:
         solver->reset_assumptions();
 
         for (int lit : assumption) {
+            if (lit == except)
+                continue;
             solver->assume(lit);
         }
 
@@ -104,6 +108,8 @@ public:
         solver->reset_assumptions();
 
         for (int lit : assumption) {
+            if (lit == except)
+                continue;
             solver->assume(lit);
         }
 
@@ -129,6 +135,8 @@ public:
         solver->reset_assumptions();
 
         for (int lit : assumption) {
+            if (lit == except)
+                continue;
             solver->assume(lit);
         }
 
@@ -153,8 +161,6 @@ public:
         for (int lit : assumption) {
             solver->assume(lit);
         }
-
-        solver->limit("conflicts", 999999999); //TODO: Fix
 
         int result = solver->solve();
 

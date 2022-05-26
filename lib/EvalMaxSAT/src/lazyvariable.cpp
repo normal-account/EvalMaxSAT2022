@@ -37,6 +37,7 @@ int LazyVariable::get() {
             assert(clause.size() > 0);
 
             clause.push_back(*var);
+
             solver -> addClause( clause );
         }
     }

@@ -62,7 +62,8 @@ class EvalMaxSAT : public VirtualMAXSAT {
 
 
     //////////////////////////////
-    ////// For extractAM ////////
+    ////// For extractAM ////////        //int B = 10000;
+
     ////////////////////////////
     void extractAM() {
         adapt_am1_exact();
@@ -414,15 +415,13 @@ public:
 
     private:
 
-   // TODO : Revisit this method. Seems like there is better performance without fullMinimize, as there are no useless lits 95% of the time...
     void minimize(VirtualSAT* S, std::list<int> & conflict, long refTime, bool doFastMinimize) {
         std::vector<int> uselessLit;
         std::vector<int> L;
         bool completed=false;
         if(!doFastMinimize) {
             std::set<int> conflictMin(conflict.begin(), conflict.end());
-            // TODO : Fix this.
-            completed = true;//fullMinimize(S, conflictMin, uselessLit, _coefMinimizeTime*refTime);
+            completed = fullMinimize(S, conflictMin, uselessLit, _coefMinimizeTime*refTime);
 
             for(auto lit: conflictMin) {
                 L.push_back(-lit);
@@ -493,12 +492,12 @@ public:
             }
             MonPrint("Exhaust fini!");
 
-            if(newAssumForCard != 0) {
-                _weight[abs(newAssumForCard)] = 1;
-                assumption.insert( newAssumForCard );
-                // Put cardinality constraint in mapAssum2card associated to softVar as index in mapAssum2card
-                mapAssum2card[ abs(newAssumForCard) ] = save_card.size()-1;
-            }
+            //if(newAssumForCard != 0) {
+            _weight[abs(newAssumForCard)] = 1;
+            assumption.insert( newAssumForCard );
+            // Put cardinality constraint in mapAssum2card associated to softVar as index in mapAssum2card
+            mapAssum2card[ abs(newAssumForCard) ] = save_card.size()-1;
+            //}
         }
     }
 
@@ -513,6 +512,9 @@ public:
             if(mapAssum2card[var] != -1) { // If there is a cardinality constraint associated to this soft var
                 int idCard = mapAssum2card[var]; // Get index in save_card
                 assert(idCard >= 0);
+
+                // Note : No need to increment the cost here, as this cardinality constraint will be added inside another
+                // cardinality constraint, and its non-satisfiability within it would implicate a cost increment anyway...
 
                 std::get<1>(save_card[idCard])++; // Increase RHS
 
@@ -570,8 +572,7 @@ public:
             vMinimizeThread.emplace_back(&EvalMaxSAT::threadMinimize, this, i, assumption.size() > 100000);
         }
 
-        MonPrint("\t\t\tMain Thread: Debut");
-        for(;;) {
+         for(;;) {
             assert(CL_ConflictToMinimize.size()==0);
             assert(CL_LitToUnrelax.size()==0);
             assert(CL_LitToRelax.size()==0);
@@ -586,6 +587,7 @@ public:
                 MonPrint("\t\t\tMain Thread: Solve...");
 
                 bool conflictFound;
+
                 if(firstSolve) {
                     MonPrint("solve(",forSolve.size(),")...");
                     conflictFound = (solver->solve(forSolve) == false);
@@ -712,7 +714,7 @@ public:
                         for(auto lit: conflictMin) {
                             CL_LitToRelax.push(lit);
                         }
-                        // Create cardinality constraints
+                        // Create cardinal ity constraints
                         if(conflictMin.size() > 1) {
                             MonPrint("\t\t\tMain Thread: new card");
                             std::vector<int> L;
@@ -761,14 +763,6 @@ public:
         return solver->getValue(var);
     }
 
-    /*
-    virtual unsigned int nVars() {
-        return solver->nVars();
-    }
-
-    virtual unsigned int nClauses() {
-        return solver->nClauses();
-    }*/
 
     virtual unsigned int newSoftVar(bool value, unsigned int weight) {
         _weight.push_back(weight);
@@ -777,11 +771,6 @@ public:
         nVars++;
 
         int lit = _weight.size() - 1;
-
-        /*newVar(lit); // TODO : Verify ...
-        for(auto s: solverForMinimize) {
-            s->newVar(lit);
-        }*/
 
         return lit;
     }
