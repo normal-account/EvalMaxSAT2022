@@ -26,7 +26,7 @@ public:
     CadicalInterface()
         : solver(new CaDiCaL::Solver()) {
     }
-
+    
     VirtualSAT* clone() override {
         CaDiCaL::Solver *copySolver = new CaDiCaL::Solver;
         solver->copy(*copySolver);
