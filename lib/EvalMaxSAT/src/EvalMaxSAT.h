@@ -714,7 +714,7 @@ public:
                         for(auto lit: conflictMin) {
                             CL_LitToRelax.push(lit);
                         }
-                        // Create cardinal ity constraints
+                        // Create cardinality constraints
                         if(conflictMin.size() > 1) {
                             MonPrint("\t\t\tMain Thread: new card");
                             std::vector<int> L;
