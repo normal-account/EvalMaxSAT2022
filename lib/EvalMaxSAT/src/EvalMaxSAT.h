@@ -671,7 +671,7 @@ public:
                         bool res = solver->solve(forSolve);
                         assert(!res);
 
-                        if( bestUnminimizedConflict.size() > solver->sizeConflict() ) {
+                        if( bestUnminimizedConflict.size() > solver->sizeConflict(forSolve) ) {
                             bestUnminimizedConflict = solver->getConflict(forSolve);
                         }
                     }

@@ -48,9 +48,9 @@ public:
 
     virtual void pushVar() {assert(!"TODO");}
 
-    virtual unsigned int sizeConflict() {assert(!"TODO");}
+    virtual unsigned int sizeConflict(const std::vector<int>& assumptions) {assert(!"TODO");}
 
-    virtual std::vector<int> getConflict(const std::vector<int>& assumptions  )  {assert(!"TODO");}
+    virtual std::vector<int> getConflict(const std::vector<int>& assumptions)  {assert(!"TODO");}
 
     std::shared_ptr<VirtualCard> newCard(const std::vector<int> &clause, unsigned int bound=1) {
         return std::make_shared<CardIncremental_Lazy>(this, clause, bound);
