@@ -103,7 +103,8 @@ int main(int argc, char *argv[]) {
 
         monMaxSat = new EvalMaxSAT();
 
-        std::string filePath = "/media/carle/UQAM/Recherche/2022_files/" + data_unweighted[id]; // For a custom path
+        std::string filePath = "./" + data_unweighted[id]; // For a custom path
+
         MaLib::Chrono C( filePath);
 
         auto in = gzopen( filePath.c_str(), "rb");
@@ -153,7 +154,8 @@ int main(int argc, char *argv[]) {
     }
 }
 
-int mainSAVE(int argc, char *argv[])
+/*
+int main(int argc, char *argv[])
 {
     Chrono chrono("c Total time");
     signal(SIGINT, signalHandler);
@@ -207,7 +209,7 @@ int mainSAVE(int argc, char *argv[])
 
     delete monMaxSat;
     return 0;
-}
+}*/
 
 
 

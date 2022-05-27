@@ -492,12 +492,12 @@ public:
             }
             MonPrint("Exhaust fini!");
 
-            //if(newAssumForCard != 0) {
-            _weight[abs(newAssumForCard)] = 1;
-            assumption.insert( newAssumForCard );
-            // Put cardinality constraint in mapAssum2card associated to softVar as index in mapAssum2card
-            mapAssum2card[ abs(newAssumForCard) ] = save_card.size()-1;
-            //}
+            if(newAssumForCard != 0) {
+                _weight[abs(newAssumForCard)] = 1;
+                assumption.insert( newAssumForCard );
+                // Put cardinality constraint in mapAssum2card associated to softVar as index in mapAssum2card
+                mapAssum2card[ abs(newAssumForCard) ] = save_card.size()-1;
+            }
         }
     }
 
@@ -688,7 +688,7 @@ public:
                         doFullMinimize = fastMinimize(solver, conflictMin);
                     }
 
-                    MonPrint("\t\t\tMain Thread: taille final du comflict = ", conflictMin.size());
+                    MonPrint("\t\t\tMain Thread: taille final du conflict = ", conflictMin.size());
 
                     if(conflictMin.size() == 1) {
                         MonPrint("\t\t\tMain Thread: Optimal found, no need to fullMinimize");
