@@ -10,6 +10,7 @@
 #include "unweighted_data.h"
 #include "weighted_data.h"
 
+#include "config.h"
 
 using namespace MaLib;
 
@@ -96,14 +97,19 @@ long calculateCost(const std::string & file, const std::vector<bool> &result) {
 }
 
 
-int main(int argc, char *argv[]) {
+
+int test() {
 
     for(unsigned int id = 0; id<data_unweighted.size(); id++) {
         srand(0);
+        std::cout << id << ":" << std::endl;
+
+        //if( (id==94) || (id==105) || (id==110) || (id==163) )
+        //    continue;
 
         monMaxSat = new EvalMaxSAT();
 
-        std::string filePath = "./" + data_unweighted[id]; // For a custom path
+        std::string filePath = BENCHMARK_FILES_FOLDER + data_unweighted[id]; // For a custom path
 
         MaLib::Chrono C( filePath);
 
@@ -154,9 +160,13 @@ int main(int argc, char *argv[]) {
     }
 }
 
-/*
 int main(int argc, char *argv[])
 {
+    if(argc==1) {
+        // TODO : cette section est juste pour le dévelopement
+        test();
+    }
+
     Chrono chrono("c Total time");
     signal(SIGINT, signalHandler);
     signal(SIGTERM, signalHandler);
@@ -194,22 +204,33 @@ int main(int argc, char *argv[])
         return 0;
     }
 
-    ////// PRINT SOLUTION //////////////////
+    ////// PRINT SOLUTION OLD FORMAT //////////////////
+    //    std::cout << "s OPTIMUM FOUND" << std::endl;
+    //    std::cout << "o " << monMaxSat->getCost() << std::endl;
+    //    std::cout << "v";
+    //    for(unsigned int i=1; i<=monMaxSat->nInputVars; i++) {
+    //        if(monMaxSat->getValue(i))
+    //            std::cout << " " << i;
+    //        else
+    //            std::cout << " -" << i;
+    //    }
+    //    std::cout << std::endl;
+    ///////////////////////////////////////
+
+    ////// PRINT SOLUTION NEW FORMAT //////////////////
     std::cout << "s OPTIMUM FOUND" << std::endl;
     std::cout << "o " << monMaxSat->getCost() << std::endl;
-    std::cout << "v";
+    std::cout << "v ";
     for(unsigned int i=1; i<=monMaxSat->nInputVars; i++) {
-        if(monMaxSat->getValue(i))
-            std::cout << " " << i;
-        else
-            std::cout << " -" << i;
+        std::cout << monMaxSat->getValue(i);
     }
     std::cout << std::endl;
     ///////////////////////////////////////
 
+
     delete monMaxSat;
     return 0;
-}*/
+}
 
 
 

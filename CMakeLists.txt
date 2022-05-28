@@ -9,6 +9,7 @@ file(
         GLOB
 	source_files
 	main.cpp
+        config.h
 )
 
 set(localLibs
