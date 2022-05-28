@@ -17,13 +17,13 @@ public:
 
     virtual ~VirtualMAXSAT();
 
-    virtual unsigned int newSoftVar(bool value, unsigned int weight) = 0;
+    virtual unsigned int newSoftVar(bool value, t_weight weight) = 0;
 
     virtual bool isSoft(unsigned int var) = 0;
 
-    virtual void setVarSoft(unsigned int var, bool value, unsigned int weight=1) = 0;
+    virtual void setVarSoft(unsigned int var, bool value, t_weight weight=1) = 0;
 
-    virtual int getCost() = 0;
+    virtual t_weight getCost() = 0;
 
     virtual void setNInputVars(unsigned int nb) = 0;
 

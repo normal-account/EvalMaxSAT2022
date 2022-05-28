@@ -726,7 +726,7 @@ public:
         this->nInputVars=nInputVars;
     }
 
-    int getCost() {
+    t_weight getCost() {
         return cost;
     }
 
@@ -735,7 +735,7 @@ public:
     }
 
 
-    virtual unsigned int newSoftVar(bool value, unsigned int weight) {
+    virtual unsigned int newSoftVar(bool value, t_weight weight) {
         _weight.push_back(weight);
         mapAssum2card.push_back(-1);
         model.push_back(value);
@@ -764,7 +764,7 @@ public:
         return var < _weight.size() && _weight[var] > 0;
     }
 
-    virtual void setVarSoft(unsigned int var, bool value, unsigned int weight) {
+    virtual void setVarSoft(unsigned int var, bool value, t_weight weight) {
         assert(weight==1);
         if(var >= _weight.size()) {
             _weight.resize(var+1, 0);

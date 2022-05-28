@@ -46,8 +46,6 @@ public:
 
     virtual bool getValue(unsigned int var)  {assert(!"TODO");} // TODO: unsigned int
 
-    virtual unsigned int newSoftVar(bool value, unsigned int weight) {assert(!"TODO");}
-
     virtual int newVar(bool decisionVar=true) {assert(!"TODO"); return 0;}
 
     virtual unsigned int sizeConflict(const std::vector<int>& assumptions) {assert(!"TODO");}

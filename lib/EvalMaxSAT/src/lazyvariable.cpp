@@ -19,7 +19,8 @@ int LazyVariable::get() {
         }
 
         // To revisit - the name of the method is misleading as we're actually adding a hard var
-        var = solver->newSoftVar(false, 0);
+        // var = solver->newSoftVar(false, 0);      // TODO : question : pourquoi newSoftVar ??
+        var = solver->newVar(false);
 
         /*
          * Add the cardinality constraints to the SatSolver in a recursive manner.
