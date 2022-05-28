@@ -130,7 +130,7 @@ class EvalMaxSAT : public VirtualMAXSAT {
                    for(auto lit: clique)
                        clause.push_back(-lit);
 
-                   processAMk(clause, 1);
+                   processAtMostOne(clause);
                }
            } else {
                addUnitClause( -LIT );
@@ -250,7 +250,7 @@ class EvalMaxSAT : public VirtualMAXSAT {
                        conn[x][qmax[i]] = false;
                    }
                }
-               auto newAssum = processAMk(clause, 1);
+               auto newAssum = processAtMostOne(clause);
                assert(qsize >= newAssum.size());
 
                for(unsigned int j=0; j<newAssum.size() ; j++) {
@@ -279,69 +279,49 @@ class EvalMaxSAT : public VirtualMAXSAT {
        assert(false);
    }
 
-
    // Harden soft vars in passed clique to then unrelax them via a new cardinality constraint
-   template<class T>
-   std::vector<int> processAMk(const T &clause, unsigned int am) {
+   std::vector<int> processAtMostOne(std::vector<int> clause) {
+       // Works also in the weighted case
        std::vector<int> newAssum;
 
-       assert(am < clause.size());
-       assert(am > 0);
+       while(clause.size() > 1) {
+           auto saveClause = clause;
+           t_weight w = _weight[ abs(clause[0]) ];
 
-       unsigned int k = clause.size()-am;
-
-       int newAssumForCard = 0;
-
-       assert(clause.size() > 1);
-
-       std::vector<int> L;
-       for(auto lit: clause) {
-           assert(lit!=0);
-           unsigned int var = static_cast<unsigned int>(abs(lit));
-
-           L.push_back(-lit);
-           _weight[var] = 0;
-
-           if(mapAssum2card[var] != -1) {
-               int tmp = mapAssum2card[var];
-               assert(tmp >= 0);
-
-               std::get<1>(save_card[tmp])++;
-               int forCard = (*std::get<0>(save_card[tmp]) <= std::get<1>(save_card[tmp]));
-
-               if(forCard != 0) {
-                   newAssum.push_back(forCard);
-                   _weight[abs(forCard)] = 1;
-                   mapAssum2card[ abs(forCard) ] = tmp;
+           for(unsigned int i=1; i<clause.size(); i++) {
+               if( w > _weight[ abs(clause[i]) ] ) {
+                   w = _weight[ abs(clause[i]) ];
                }
            }
+           assert(w > 0);
+
+           for(unsigned int i=0; i<clause.size(); ) {
+               assert( model[ abs(clause[i]) ] == (clause[i]>0) );
+               _weight[ abs(clause[i]) ] -= w;
+
+               if( _weight[ abs(clause[i]) ] == 0 ) {
+                   //removeLitFromAssum(clause[i]);
+                   _assumption.erase( clause[i] );
+                   clause[i] = clause.back();
+                   clause.pop_back();
+               } else {
+                   i++;
+               }
+           }
+           MonPrint("AM1: cost = ", cost, " + ", w * (t_weight)(saveClause.size()-1));
+           cost += w * (t_weight)(saveClause.size()-1);
+
+           assert(saveClause.size() > 1);
+           newAssum.push_back( addWeightedClause(saveClause, w) );
+           assert( _weight[ abs(newAssum.back()) ] > 0 );
+           assert( model[ abs(newAssum.back()) ]  == (newAssum.back() > 0) );
        }
 
-       assert(L.size()>1);
-       assert(k < L.size());
-
-       cost += k;
-       MonPrint("cost = ", cost);
-
-       // The following lines caused cost issues with Cadical - to revisit
-       /*if(L.size() == 2) { // Optional, just to no add useless card to save_card
-           newAssum.push_back( addWeightedClause( {-L[0], -L[1]}, 1 ) );
-           return newAssum;
-       }*/
-
-       save_card.push_back( {newCard(L, k), k} );
-       newAssumForCard = (*std::get<0>(save_card.back()) <= std::get<1>(save_card.back()));
-
-       if(newAssumForCard != 0) {
-           newAssum.push_back(newAssumForCard);
-           _weight[abs(newAssumForCard)] = 1;
-           mapAssum2card[abs(newAssumForCard)] = save_card.size()-1;
+       if( clause.size() ) {
+           newAssum.push_back(clause[0]);
        }
-
        return newAssum;
    }
-   ///////////////////////////
-
 
 
 
@@ -764,17 +744,41 @@ public:
         return var < _weight.size() && _weight[var] > 0;
     }
 
+
+
+
+
     virtual void setVarSoft(unsigned int var, bool value, t_weight weight) {
         assert(weight==1);
-        if(var >= _weight.size()) {
-            _weight.resize(var+1, 0);
-            mapAssum2card.resize(var+1, -1);
-            model.resize(var+1);
+
+        while(var > nVars()) {
+            newVar();
         }
 
-        assert(_weight[var] == 0);      // We assume the variable is not already soft
-        _weight[var] = weight;
-        model[var] = value;             // "value" is the sign but represented as a bool
+        if( _weight[var] == 0 ) {
+           _weight[var] = weight;
+           model[var] = value;      // "value" is the sign but represented as a bool
+        } else {
+            // In the case of weighted formula
+
+            if(model[var] == value) {
+                _weight[var] += weight;
+            } else {
+                if( _weight[var] > weight ) {
+                    _weight[var] -= weight;
+                    cost += weight;
+                } else if( _weight[var] < weight ) {
+                    cost += _weight[var];
+                    _weight[var] = weight - _weight[var];
+                    model[var] = !model[var];
+                } else { assert( _weight[var] == weight );
+                    cost += _weight[var];
+                    _weight[var] = 0;
+                    //nbSoft--;
+                }
+            }
+        }
+
     }
 
     virtual unsigned int nSoftVar() {
