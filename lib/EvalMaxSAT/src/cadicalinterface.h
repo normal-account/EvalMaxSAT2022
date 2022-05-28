@@ -17,7 +17,8 @@
 
 class CadicalInterface : public VirtualSAT {
     CaDiCaL::Solver *solver;
-    int conflictSize;
+    unsigned int nVar = 0;
+    //int conflictSize;
     CadicalInterface( CaDiCaL::Solver* solver)
         : solver(solver) {
     }
@@ -47,7 +48,17 @@ public:
         solver->add(0);
     }
 
-   virtual void addClause( std::vector<int> &clause ) {
+
+   virtual int newVar(bool decisionVar=true) override {
+        // decisionVar not implemented in Cadical ?
+        return ++nVar;
+    }
+
+    virtual unsigned int nVars() override {
+        return nVar;
+    }
+
+   virtual void addClause( std::vector<int> &clause ) override {
         for (int lit : clause)
             solver->add(lit);
        solver->add(0);
@@ -60,9 +71,19 @@ public:
 
     std::vector<int> getConflict(const std::vector<int> &assumptions) override {
         std::vector<int> conflicts;
-        for (int assumption : assumptions) {
-            if (solver->failed(assumption)) {
-                conflicts.push_back(assumption);
+        for (int lit : assumptions) {
+            if (solver->failed(lit)) {
+                conflicts.push_back(lit);
+            }
+        }
+        return conflicts;
+    }
+
+    std::vector<int> getConflict(const std::set<int> &assumptions) override {
+        std::vector<int> conflicts;
+        for (int lit : assumptions) {
+            if (solver->failed(lit)) {
+                conflicts.push_back(lit);
             }
         }
         return conflicts;
@@ -71,8 +92,8 @@ public:
     // There is no method to get the size of the conflict in Cadical - hotfix
     unsigned int sizeConflict(const std::vector<int> &assumptions) override {
         int nConflicts = 0;
-        for (int assumption : assumptions) {
-            if (solver->failed(assumption)) {
+        for (int lit : assumptions) {
+            if (solver->failed(lit)) {
                 nConflicts++;
             }
         }
@@ -105,6 +126,7 @@ public:
         }
 
         assert(false);
+        return 0;
     }
 
     int solveLimited(const std::list<int> &assumption, int confBudget, int except=0) override {
@@ -131,6 +153,7 @@ public:
         }
 
         assert(false);
+        return 0;
     }
 
 
@@ -158,6 +181,7 @@ public:
         }
 
         assert(false);
+        return 0;
     }
 
     bool solve(const std::vector<int> &assumption) override {
@@ -167,6 +191,21 @@ public:
 
         int result = solver->solve();
 
+        assert( (result == 10) || (result == 20) );
+
+        return result == 10; // Sat
+    }
+
+
+    bool solve(const std::set<int> &assumption) override {
+        for (int lit : assumption) {
+            solver->assume(lit);
+        }
+
+        int result = solver->solve();
+
+        assert( (result == 10) || (result == 20) );
+
         return result == 10; // Sat
     }
 
@@ -174,9 +213,6 @@ public:
         return (solver->val(var) > 0);
     }
 
-    void newVar(int lit) override {
-        solver->add(lit);
-    }
 };
 CadicalInterface::~CadicalInterface() {
     delete solver;

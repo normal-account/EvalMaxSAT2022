@@ -28,11 +28,15 @@ public:
 
     virtual unsigned int nSoftVar() {assert(!"TODO");}
 
+    virtual unsigned int nVars() {assert(!"TODO"); return 0;}
+
     virtual bool solve() {assert(!"TODO");}
 
     virtual bool propagate(const std::vector<int> &assum, std::vector<int> &result) {assert(!"TODO");}
 
     virtual bool solve(const std::vector<int> &assumption)  {assert(!"TODO");}
+
+    virtual bool solve(const std::set<int> &assumption)  {assert(!"TODO");}
 
     virtual int solveLimited(const std::vector<int> &assumption, int confBudget, int except=0)  {assert(!"TODO");}
 
@@ -42,15 +46,15 @@ public:
 
     virtual bool getValue(unsigned int var)  {assert(!"TODO");} // TODO: unsigned int
 
-    virtual void newVar(int lit) {assert(!"TODO");}
-
     virtual unsigned int newSoftVar(bool value, unsigned int weight) {assert(!"TODO");}
 
-    virtual void pushVar() {assert(!"TODO");}
+    virtual int newVar(bool decisionVar=true) {assert(!"TODO"); return 0;}
 
     virtual unsigned int sizeConflict(const std::vector<int>& assumptions) {assert(!"TODO");}
 
     virtual std::vector<int> getConflict(const std::vector<int>& assumptions)  {assert(!"TODO");}
+
+    virtual std::vector<int> getConflict(const std::set<int>& assumptions)  {assert(!"TODO");}
 
     std::shared_ptr<VirtualCard> newCard(const std::vector<int> &clause, unsigned int bound=1) {
         return std::make_shared<CardIncremental_Lazy>(this, clause, bound);

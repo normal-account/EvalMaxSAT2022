@@ -15,8 +15,6 @@ protected:
     unsigned int nbLit;
     unsigned int bound;
 
-    unsigned int newVar(int lit);
-
 public:
 
     VirtualCard(VirtualSAT *solver, const std::vector<int> &clause, unsigned int bound=0)

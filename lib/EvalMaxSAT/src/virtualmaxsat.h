@@ -9,12 +9,11 @@
 #include "../../cadical/src/file.hpp"
 #include "ParseUtils.h"
 
+
+typedef unsigned long long int t_weight;
+
 class VirtualMAXSAT : public VirtualSAT {
 public:
-   int nVars = 0;
-   std::vector < std::tuple < std::vector<int>, int> > softClauses;
-   std::vector<std::vector<int>> hardClauses;
-
 
     virtual ~VirtualMAXSAT();
 
@@ -28,7 +27,7 @@ public:
 
     virtual void setNInputVars(unsigned int nb) = 0;
 
-    int addWeightedClause(std::vector<int> clause, unsigned int weight) {
+    int addWeightedClause(std::vector<int> clause, t_weight weight) {
         assert(weight==1);
         // If it's a unit clause and its literal doesn't exist as a soft var already, add soft variable
         if(clause.size() == 1) {
@@ -44,84 +43,66 @@ public:
 
         // Soft clauses are "hard" clauses with a soft var at the end. Create said soft var for our clause.
         int r = static_cast<int>(newSoftVar(true, weight));
+        clause.push_back( -r );
+        addClause(clause);
+        clause.pop_back();
 
         return r;
     }
 
+   std::vector<int> readClause(StreamBuffer &in) {
+       std::vector<int> clause;
 
-   void addAllClauses() {
-       for (int i = 0; i < nVars; i++)
-           pushVar();
-
-       for (auto &hardClause : hardClauses) {
-           for (int j : hardClause) {
-               newVar(j);
-           }
-           newVar(0);
-       }
-
-       for (auto &softTuple : softClauses) {
-           std::vector<int> &softClause = std::get<0>(softTuple);
-
-           int softVar = addWeightedClause(softClause, std::get<1>(softTuple));
-           if (softVar) {
-               for (int var : softClause) {
-                   newVar(var);
-               }
-
-               newVar(-softVar);
-               newVar(0);
-           }
-
-       }
-       hardClauses.clear();
-       softClauses.clear();
-   }
-
-   void readClause(StreamBuffer &in, std::vector<int> &lits) {
-       int lit;
        for (;;) {
-           lit = parseInt(in);
+           int lit = parseInt(in);
 
            if (lit == 0)
                break;
-           lits.push_back(lit);
-           if (abs(lit) > nVars)
-               nVars = abs(lit);
+           clause.push_back(lit);
+           while( abs(lit) > nVars()) {
+               newVar();
+           }
        }
+
+       return clause;
    }
 
    bool parse(gzFile in_) {
        StreamBuffer in(in_);
 
-       std::vector<int> lits;
-       int count = 0;
+       if(*in == EOF) {
+           return false;
+       }
+
+       std::vector < std::tuple < std::vector<int>, t_weight> > softClauses;
+
        for(;;) {
            skipWhitespace(in);
 
-           if(*in == EOF)
-           {
-               addAllClauses();
-               return true;
+           if(*in == EOF) {
+               break;
            }
 
            if(*in == 'c')
                skipLine(in);
            else {
-               count++;
-               lits.clear();
-
-               int weight = parseInt64(in);
-
-               readClause(in, lits);
+               t_weight weight = parseInt64(in);
+               std::vector<int> clause = readClause(in);
 
                if(weight == 0) {
-                   hardClauses.push_back(lits);
+                   addClause(clause);
                } else {
-                   softClauses.push_back( {lits, weight} );
+                   // If it is a soft clause, we have to save it to add it once we are sure we know the total number of variables.
+                   softClauses.push_back({clause, weight});
                }
            }
        }
+
+       for(auto & [clause, weight]: softClauses) {
+           addWeightedClause(clause, weight);
+       }
+
+       return true;
     }
 
 };
