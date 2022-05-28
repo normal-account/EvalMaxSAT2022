@@ -27,100 +27,33 @@ void signalHandler( int signum ) {
 }
 
 
-template<class B>
-static void readClause(B& in, std::vector<int>& lits) {
-    int parsed_lit;
-    lits.clear();
-    for (;;){
-        parsed_lit = parseInt(in);
-        if (parsed_lit == 0) break;
-        lits.push_back( parsed_lit );
-    }
-}
-
-long calculateCost(const std::string & file, const std::vector<bool> &result) {
-    long cost = 0;
-    auto in_ = gzopen(file.c_str(), "rb");
-
-                StreamBuffer in(in_);
-
-                bool weighted = true;
-                int64_t top = -1;
-                int64_t weight = 1;
-
-                std::vector<int> lits;
-                int vars = 0;
-                int inClauses = 0;
-                int count = 0;
-                for(;;) {
-                    skipWhitespace(in);
-
-                    if(*in == EOF)
-                        break;
-
-                    else if(*in == 'c')
-                        skipLine(in);
-                    else {
-                        count++;
-                        if(weighted)
-                            weight = parseInt64(in);
-                        readClause(in, lits);
-                        if(weight == 0) {
-                            bool sat=false;
-                            for(auto l: lits) {
-                                assert(abs(l) < result.size());
-                                if ( (l>0) == (result[abs(l)]) ) {
-                                    sat = true;
-                                    break;
-                                }
-                            }
-                            assert(sat);
-                        } else {
-                            bool sat=false;
-                            for(auto l: lits) {
-                                assert(abs(l) < result.size());
-
-                                if ( (l>0) == (result[abs(l)]) ) {
-                                    sat = true;
-                                    break;
-                                }
-                            }
-                            if(!sat) {
-                                cost += weight;
-                            }
-                        }
-                    }
-                }
-
-    gzclose(in_);
-    return cost;
-}
-
-
 
 int test() {
 
-    for(unsigned int id = 0; id<data_unweighted.size(); id++) {
+    for(unsigned int id = 13; id<data_weighted.size(); id++) {
         srand(0);
-        std::cout << id << ":" << std::endl;
+        std::cout << id << ":" << data_weighted[id] << std::endl;
+
+
+        if( (id==34) || (id==45)  )
+            continue;
+
 
         //if( (id==94) || (id==105) || (id==110) || (id==163) )
         //    continue;
 
         monMaxSat = new EvalMaxSAT();
 
-        std::string filePath = BENCHMARK_FILES_FOLDER + data_unweighted[id]; // For a custom path
+        std::string filePath = BENCHMARK_FILES_FOLDER + data_weighted[id]; // For a custom path
 
         MaLib::Chrono C( filePath);
 
-        auto in = gzopen( filePath.c_str(), "rb");
-        if(!monMaxSat->parse(in)) { // TODO : rendre robuste au header mismatch
+
+        if(!monMaxSat->parse(filePath)) { // TODO : rendre robuste au header mismatch
             std::cerr << "Impossible de lire le fichier" << std::endl;
             assert(false);
             return -1;
         }
-
-        gzclose(in);
 
         if(!monMaxSat->solve()) {
             std::cerr << "Pas de solution ?!?" << std::endl;
@@ -128,14 +61,14 @@ int test() {
             return -1;
         }
 
-        if( monMaxSat->getCost() != data_unweighted_cost[id]) {
+        if( monMaxSat->getCost() != data_weighted_cost[id]) {
             std::cerr << "id = " << id << std::endl;
             std::cerr << "file = " << filePath << std::endl;
-            std::cerr << "Résultat éroné : \n   Trouvé : " << monMaxSat->getCost() << "\n  Attendu : " << data_unweighted_cost[id] << std::endl;
+            std::cerr << "Résultat éroné : \n   Trouvé : " << monMaxSat->getCost() << "\n  Attendu : " << data_weighted_cost[id] << std::endl;
             std::vector<bool> assign;
             assign.push_back(0); // fake var_0
 
-            for(unsigned int i=1; i<=data_unweighted_nVars[id]; i++) {
+            for(unsigned int i=1; i<=monMaxSat->nInputVars; i++) {
                 assign.push_back(monMaxSat->getValue(i));
             }
 
@@ -147,7 +80,7 @@ int test() {
 
             std::vector<bool> assign;
             assign.push_back(0); // fake var_0
-            for(unsigned int i=1; i<=data_unweighted_nVars[id]; i++) {
+            for(unsigned int i=1; i<=monMaxSat->nInputVars; i++) {
                 assign.push_back(monMaxSat->getValue(i));
             }
 
@@ -158,13 +91,14 @@ int test() {
         }
         delete monMaxSat;
     }
+    return 0;
 }
 
 int main(int argc, char *argv[])
 {
     if(argc==1) {
         // TODO : cette section est juste pour le dévelopement
-        test();
+        return test();
     }
 
     Chrono chrono("c Total time");
@@ -194,8 +128,7 @@ int main(int argc, char *argv[])
     monMaxSat->setTimeOutFast(timeOutFastMinimize);
     monMaxSat->setCoefMinimize(coefMinimizeTime);
 
-    auto in = gzopen(file.c_str(), "rb");
-    if(!monMaxSat->parse(in)) {
+    if(!monMaxSat->parse(file)) {
         return -1;
     }
 

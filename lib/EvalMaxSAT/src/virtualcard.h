@@ -22,6 +22,8 @@ public:
 
     }
 
+    virtual std::vector<int> getClause() = 0;
+
     virtual ~VirtualCard();
 
     virtual int operator <= (unsigned int k) {

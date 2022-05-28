@@ -43,10 +43,12 @@ public:
         return solver->find_up_implicants(assum, result);
     }
 
+    /*
     void addUnitClause( int lit ) override {
         solver->add( lit );
         solver->add(0);
     }
+    */
 
 
    virtual int newVar(bool decisionVar=true) override {
@@ -58,7 +60,7 @@ public:
         return nVar;
     }
 
-   virtual void addClause( std::vector<int> &clause ) override {
+   virtual void addClause( const std::vector<int> &clause ) override {
         for (int lit : clause)
             solver->add(lit);
        solver->add(0);

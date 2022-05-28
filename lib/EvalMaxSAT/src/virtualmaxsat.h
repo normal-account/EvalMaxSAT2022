@@ -13,6 +13,10 @@
 typedef unsigned long long int t_weight;
 
 class VirtualMAXSAT : public VirtualSAT {
+
+    bool _isWeighted = false; // TODO : remplacer par  mapWeight2Assum
+protected:
+    std::map<int, std::vector<int> > mapSoft2clause;    // which clause is related to which soft variable.
 public:
 
     virtual ~VirtualMAXSAT();
@@ -25,10 +29,23 @@ public:
 
     virtual t_weight getCost() = 0;
 
-    virtual void setNInputVars(unsigned int nb) = 0;
+
+    void setIsWeightedVerif() {  // TODO : remplacer par  mapWeight2Assum
+        _isWeighted = true;
+    }
+    virtual bool isWeightedVerif() { // TODO : remplacer par  mapWeight2Assum
+        return _isWeighted;
+    }
+
+    virtual bool isWeighted() = 0;
+
+    unsigned int nInputVars=0;
+    void setNInputVars(unsigned int nInputVars) {
+        this->nInputVars=nInputVars;
+    }
 
     int addWeightedClause(std::vector<int> clause, t_weight weight) {
-        assert(weight==1);
+        //assert(weight==1);
         // If it's a unit clause and its literal doesn't exist as a soft var already, add soft variable
         if(clause.size() == 1) {
             if(!isSoft(abs(clause[0]))) {   // TODO : pas besoin de cette vérification dans le cas weighted
@@ -47,6 +64,8 @@ public:
         clause.push_back( -r );
         addClause(clause);
         clause.pop_back();
+
+        mapSoft2clause[r] = clause;
 
         return r;
     }
@@ -68,8 +87,12 @@ public:
        return clause;
    }
 
-   bool parse(gzFile in_) {
-       StreamBuffer in(in_);
+   std::string savePourTest_file;
+   bool parse(const std::string& filePath) {
+       auto gz = gzopen( filePath.c_str(), "rb");
+
+       savePourTest_file = filePath;
+       StreamBuffer in(gz);
 
        if(*in == EOF) {
            return false;
@@ -99,10 +122,12 @@ public:
            }
        }
 
+       setNInputVars(nVars());
        for(auto & [clause, weight]: softClauses) {
            addWeightedClause(clause, weight);
        }
 
+       gzclose(gz);
        return true;
     }
 

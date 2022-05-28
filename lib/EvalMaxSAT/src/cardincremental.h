@@ -35,11 +35,39 @@ class CardIncremental_Lazy : public VirtualCard {
                 }
             }
         }
+
+
+        std::vector<int> getClause() {
+            std::vector<int> clause;
+            getClause(clause);
+            return clause;
+        }
+
+   private:
+       void getClause(std::vector<int> &clause) {
+           if(left == nullptr && right == nullptr) {
+               assert(lazyVars.size() == 1);
+               clause.push_back( lazyVars[0]->get() );
+           } else {
+               if(left != nullptr) {
+                   left->getClause(clause);
+               }
+               if(right != nullptr) {
+                   right->getClause(clause);
+               }
+           }
+       }
+
     };
 
     std::shared_ptr<TotTree> _tree;
     unsigned int _maxVars; // Max number of literals in a tree, ignoring k-simplification
 public:
+
+    virtual std::vector<int> getClause() override {
+        return _tree->getClause();
+    }
+
 
     void print(std::ostream& os) const override {
         os << "[";

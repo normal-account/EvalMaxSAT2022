@@ -22,9 +22,9 @@ public:
 
     virtual VirtualSAT* clone() {assert(!"TODO");}
 
-    virtual void addUnitClause( int lit )  {assert( !"TODO");}
+    //virtual void addUnitClause( int lit )  {assert( !"TODO");}
 
-    virtual void addClause( std::vector<int> &clause )  {assert( !"TODO");}
+    virtual void addClause( const std::vector<int> &clause )  {assert( !"TODO");}
 
     virtual unsigned int nSoftVar() {assert(!"TODO");}
 

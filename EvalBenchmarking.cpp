@@ -20,9 +20,9 @@
 // Warning : if you interrupt the process, the threads will keep going as I didn't handle that case
 
 // !!! Modify the following args !!!
-const std::string MAXSAT_BIN_PATH = "/home/carle/.ssh/CadicalEval/EvalMaxSAT_bin";
-const std::string BENCHMARK_FILES_FOLDER = "/media/carle/UQAM/Recherche/2022_files/";
-const std::string OUTPUT_FILE = "./output";
+const std::string MAXSAT_BIN_PATH = "./EvalMaxSAT_bin";
+const std::string BENCHMARK_FILES_FOLDER = "/home/florent/wcnf/";
+const std::string OUTPUT_FILE = "./bench_unweighted.txt";
 const std::string BENCHMARK_TIMEOUT = "3600"; // In seconds
 const int NUMBER_OF_THREADS = 16;
 // #################################
