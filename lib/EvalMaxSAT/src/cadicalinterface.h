@@ -92,16 +92,9 @@ public:
         }
         return conflicts;
     }
-
-    // There is no method to get the size of the conflict in Cadical - hotfix
-    unsigned int sizeConflict(const std::vector<int> &assumptions) override {
-        int nConflicts = 0;
-        for (int lit : assumptions) {
-            if (solver->failed(lit)) {
-                nConflicts++;
-            }
-        }
-        return nConflicts;
+	
+    unsigned int conflictSize() override {
+	    return solver->conflictSize();
     }
 
     int solveLimited(const std::vector<int> &assumption, int confBudget, int except=0) override {

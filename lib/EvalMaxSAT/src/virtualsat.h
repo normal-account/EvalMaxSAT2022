@@ -48,7 +48,7 @@ public:
 
     virtual int newVar(bool decisionVar=true) {assert(!"TODO"); return 0;}
 
-    virtual unsigned int sizeConflict(const std::vector<int>& assumptions) {assert(!"TODO");}
+    virtual unsigned int conflictSize() {assert(!"TODO");}
 
     virtual std::vector<int> getConflict(const std::vector<int>& assumptions)  {assert(!"TODO");}
 
