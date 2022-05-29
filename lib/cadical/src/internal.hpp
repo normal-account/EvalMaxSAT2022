@@ -220,7 +220,10 @@ struct Internal {
   Internal * internal;          // proxy to 'this' in macros
   External * external;          // proxy to 'external' buddy in 'Solver'
 
-  /*----------------------------------------------------------------------*/
+  int conflictsize = 0;
+
+
+      /*----------------------------------------------------------------------*/
 
   // Asynchronous termination flag written by 'terminate' and read by
   // 'terminated_asynchronously' (the latter at the end of this header).
@@ -530,6 +533,7 @@ struct Internal {
   void search_assume_decision (int decision);
   void assign_unit (int lit);
   bool propagate ();
+  int conflict_size();
 
   // Undo and restart in 'backtrack.cpp'.
   //

@@ -250,7 +250,9 @@ public:
   //
   int solve ();
 
-  // Get value (-lit=false, lit=true) of valid non-zero literal.
+  int conflictSize();
+
+   // Get value (-lit=false, lit=true) of valid non-zero literal.
   //
   //   require (SATISFIED)
   //   ensure (SATISFIED)

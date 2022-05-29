@@ -658,6 +658,11 @@ bool Solver::find_up_implicants(vector<int> antecedents,
    return res;
 }
 
+int Solver::conflictSize()
+{
+    return external->conflict_size();
+}
+
 
 /*------------------------------------------------------------------------*/
 

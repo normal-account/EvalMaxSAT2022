@@ -76,6 +76,7 @@ void Internal::failing () {
       const unsigned bit = bign (failed);
       assert (!(f.failed & bit));
       f.failed |= bit;
+      conflictsize++;
     }
 
     // First case (1).
@@ -93,6 +94,7 @@ void Internal::failing () {
       const unsigned bit = bign (-failed);
       assert (!(f.failed & bit));
       f.failed |= bit;
+      conflictsize++;
       goto DONE;
     }
 
@@ -153,6 +155,7 @@ void Internal::failing () {
         const unsigned bit = bign (lit);
         assert (!(f.failed & bit));
         f.failed |= bit;
+        conflictsize++;
       }
     }
     clear_analyzed_literals ();
@@ -214,11 +217,20 @@ void Internal::reset_assumptions () {
     const unsigned char bit = bign (lit);
     f.assumed &= ~bit;
     f.failed &= ~bit;
+
     melt (lit);
   }
   LOG ("cleared %zd assumptions", assumptions.size ());
   assumptions.clear ();
   marked_failed = true;
+}
+
+int Internal::conflict_size() {
+    if (!marked_failed) {
+        failing();
+        marked_failed = true;
+   }
+    return conflictsize;
 }
 
 }

@@ -104,6 +104,7 @@ struct External {
   //
   vector<bool> moltentab;
 
+
   //----------------------------------------------------------------------//
 
   const Range vars;           // Provides safe variable iterations.
@@ -151,6 +152,7 @@ struct External {
   // external assignment using the extension stack (and sets 'extended').
   //
   void extend ();
+
 
   /*----------------------------------------------------------------------*/
 
@@ -254,6 +256,7 @@ struct External {
   void add (int elit);
   void assume (int elit);
   int solve (bool preprocess_only);
+  int conflict_size();
   bool find_up_implicants(vector<int> antecedents, vector<int>& implicants);
 
   // We call it 'ival' as abbreviation for 'val' with 'int' return type to

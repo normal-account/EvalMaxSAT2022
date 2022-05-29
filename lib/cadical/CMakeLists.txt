@@ -21,7 +21,7 @@ set(externLibs
         z
         )
 
-#add_definitions(-DNDEBUG)
+add_definitions(-DNDEBUG)
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++1z -Wall -O3")
 
 

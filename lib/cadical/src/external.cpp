@@ -271,6 +271,10 @@ int External::solve (bool preprocess_only) {
   return res;
 }
 
+int External::conflict_size() {
+    return internal->conflict_size();
+}
+
 // Taken from MaxHS
 bool External::find_up_implicants(vector<int> antecedents, vector<int>& implicants) {
    reset_extended();

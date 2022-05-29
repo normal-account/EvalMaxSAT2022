@@ -582,6 +582,7 @@ int Internal::local_search () {
 int Internal::solve (bool preprocess_only) {
   assert (clause.empty ());
   START (solve);
+  conflictsize = 0;
   if (preprocess_only) LOG ("internal solving in preprocessing only mode");
   else LOG ("internal solving in full mode");
   init_report_limits ();
