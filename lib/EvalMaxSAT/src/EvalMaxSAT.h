@@ -36,84 +36,76 @@ static void readClause(B& in, std::vector<int>& lits) {
 
 
 t_weight calculateCost(const std::string & file, const std::vector<bool> &result) {
-    long cost = 0;
+    t_weight cost = 0;
     auto in_ = gzopen(file.c_str(), "rb");
     t_weight weightForHardClause = -1;
 
-                StreamBuffer in(in_);
+    StreamBuffer in(in_);
 
-                bool weighted = true;
-                int64_t top = -1;
-                int64_t weight = 1;
+    std::vector<int> lits;
+    for(;;) {
+        skipWhitespace(in);
 
-                std::vector<int> lits;
-                int vars = 0;
-                int inClauses = 0;
-                int count = 0;
-                for(;;) {
-                    skipWhitespace(in);
+        if(*in == EOF)
+            break;
 
-                    if(*in == EOF)
+        else if(*in == 'c') {
+            skipLine(in);
+        } else if(*in == 'p') { // Old format
+          ++in;
+          if(*in != ' ') {
+              std::cerr << "o PARSE ERROR! Unexpected char: " << static_cast<char>(*in) << std::endl;
+              return false;
+          }
+          skipWhitespace(in);
+
+          if(eagerMatch(in, "wcnf")) {
+              parseInt(in); // # Var
+              parseInt(in); // # Clauses
+              weightForHardClause = parseWeight(in);
+          } else {
+              std::cerr << "o PARSE ERROR! Unexpected char: " << static_cast<char>(*in) << std::endl;
+              return false;
+          }
+      }
+        else {
+            t_weight weight = parseWeight(in);
+            readClause(in, lits);
+            if(weight == weightForHardClause) {
+                bool sat=false;
+                for(auto l: lits) {
+                    if(abs(l) >= result.size()) {
+                        std::cerr << "calculateCost: Parsing error." << std::endl;
+                        return -1;
+                    }
+                    if ( (l>0) == (result[abs(l)]) ) {
+                        sat = true;
                         break;
-
-                    else if(*in == 'c') {
-                        skipLine(in);
-                    } else if(*in == 'p') { // Old format
-                      ++in;
-                      if(*in != ' ') {
-                          std::cerr << "o PARSE ERROR! Unexpected char: " << static_cast<char>(*in) << std::endl;
-                          return false;
-                      }
-                      skipWhitespace(in);
-
-                      if(eagerMatch(in, "wcnf")) {
-                          parseInt(in); // # Var
-                          parseInt(in); // # Clauses
-                          weightForHardClause = parseWeight(in);
-                      } else {
-                          std::cerr << "o PARSE ERROR! Unexpected char: " << static_cast<char>(*in) << std::endl;
-                          return false;
-                      }
-                  }
-                    else {
-                        count++;
-                        weight = parseWeight(in);
-                        readClause(in, lits);
-                        if(weight == weightForHardClause) {
-                            bool sat=false;
-                            for(auto l: lits) {
-                                if(abs(l) >= result.size()) {
-                                    std::cerr << "calculateCost: Parsing error." << std::endl;
-                                    return -1;
-                                }
-                                if ( (l>0) == (result[abs(l)]) ) {
-                                    sat = true;
-                                    break;
-                                }
-                            }
-                            if(!sat) {
-                                std::cerr << "calculateCost: NON SAT !" << std::endl;
-                                return -1;
-                            }
-                        } else {
-                            bool sat=false;
-                            for(auto l: lits) {
-                                if(abs(l) >= result.size()) {
-                                    std::cerr << "calculateCost: Parsing error." << std::endl;
-                                    return -1;
-                                }
-
-                                if ( (l>0) == (result[abs(l)]) ) {
-                                    sat = true;
-                                    break;
-                                }
-                            }
-                            if(!sat) {
-                                cost += weight;
-                            }
-                        }
                     }
                 }
+                if(!sat) {
+                    std::cerr << "calculateCost: NON SAT !" << std::endl;
+                    return -1;
+                }
+            } else {
+                bool sat=false;
+                for(auto l: lits) {
+                    if(abs(l) >= result.size()) {
+                        std::cerr << "calculateCost: Parsing error." << std::endl;
+                        return -1;
+                    }
+
+                    if ( (l>0) == (result[abs(l)]) ) {
+                        sat = true;
+                        break;
+                    }
+                }
+                if(!sat) {
+                    cost += weight;
+                }
+            }
+        }
+    }
 
     gzclose(in_);
     return cost;

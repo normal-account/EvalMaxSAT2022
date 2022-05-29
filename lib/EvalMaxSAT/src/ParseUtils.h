@@ -134,7 +134,7 @@ static unsigned long long int parseWeight(B& in) {
         //++in;
         return (unsigned long long int)-1;
     }
-    if      (*in == '-') fprintf(stderr, "o PARSE ERROR! Unexpected negative weight\n", *in), exit(3);
+    if      (*in == '-') fprintf(stderr, "o PARSE ERROR! Unexpected negative weight\n"), exit(3);
     else if (*in == '+') ++in;
     if (*in < '0' || *in > '9') fprintf(stderr, "o PARSE ERROR! Unexpected char in parseWeight: %c\n", *in), exit(3);
     while (*in >= '0' && *in <= '9')

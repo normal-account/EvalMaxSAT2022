@@ -93,36 +93,46 @@ static void readClause(B& in, std::vector<int>& lits) {
 }
 
 unsigned long long calculateCost(const std::string & file, const std::vector<bool> &result) {
-    long cost = 0;
+    unsigned long long cost = 0;
     auto in_ = gzopen(file.c_str(), "rb");
+    unsigned long long weightForHardClause = -1;
+
     StreamBuffer in(in_);
 
-    bool weighted = true;
-    int64_t top = -1;
-    int64_t weight = 1;
-
     std::vector<int> lits;
-    int vars = 0;
-    int inClauses = 0;
-    int count = 0;
     for(;;) {
         skipWhitespace(in);
 
         if(*in == EOF)
             break;
 
-        else if(*in == 'c')
+        else if(*in == 'c') {
             skipLine(in);
+        } else if(*in == 'p') { // Old format
+          ++in;
+          if(*in != ' ') {
+              std::cerr << "o PARSE ERROR! Unexpected char: " << static_cast<char>(*in) << std::endl;
+              return false;
+          }
+          skipWhitespace(in);
+
+          if(eagerMatch(in, "wcnf")) {
+              parseInt(in); // # Var
+              parseInt(in); // # Clauses
+              weightForHardClause = parseWeight(in);
+          } else {
+              std::cerr << "o PARSE ERROR! Unexpected char: " << static_cast<char>(*in) << std::endl;
+              return false;
+          }
+      }
         else {
-            count++;
-            if(weighted)
-                weight = parseInt64(in);
+            unsigned long long weight = parseWeight(in);
             readClause(in, lits);
-            if(weight == 0) {
+            if(weight == weightForHardClause) {
                 bool sat=false;
                 for(auto l: lits) {
                     if(abs(l) >= result.size()) {
-                        {std::lock_guard lock(forPrint); std::cerr << "calculateCost: Parsing error." << std::endl;}
+                        std::cerr << "calculateCost: Parsing error." << std::endl;
                         return -1;
                     }
                     if ( (l>0) == (result[abs(l)]) ) {
@@ -131,14 +141,14 @@ unsigned long long calculateCost(const std::string & file, const std::vector<boo
                     }
                 }
                 if(!sat) {
-                    {std::lock_guard lock(forPrint); std::cerr << "calculateCost: NON SAT !" << std::endl;}
+                    std::cerr << "calculateCost: NON SAT !" << std::endl;
                     return -1;
                 }
             } else {
                 bool sat=false;
                 for(auto l: lits) {
                     if(abs(l) >= result.size()) {
-                        {std::lock_guard lock(forPrint); std::cerr << "calculateCost: Parsing error." << std::endl;}
+                        std::cerr << "calculateCost: Parsing error." << std::endl;
                         return -1;
                     }
 
