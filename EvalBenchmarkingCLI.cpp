@@ -92,68 +92,67 @@ static void readClause(B& in, std::vector<int>& lits) {
     }
 }
 
-long calculateCost(const std::string & file, const std::vector<bool> &result) {
+unsigned long long calculateCost(const std::string & file, const std::vector<bool> &result) {
     long cost = 0;
     auto in_ = gzopen(file.c_str(), "rb");
+    StreamBuffer in(in_);
 
-                StreamBuffer in(in_);
+    bool weighted = true;
+    int64_t top = -1;
+    int64_t weight = 1;
 
-                bool weighted = true;
-                int64_t top = -1;
-                int64_t weight = 1;
+    std::vector<int> lits;
+    int vars = 0;
+    int inClauses = 0;
+    int count = 0;
+    for(;;) {
+        skipWhitespace(in);
 
-                std::vector<int> lits;
-                int vars = 0;
-                int inClauses = 0;
-                int count = 0;
-                for(;;) {
-                    skipWhitespace(in);
+        if(*in == EOF)
+            break;
 
-                    if(*in == EOF)
+        else if(*in == 'c')
+            skipLine(in);
+        else {
+            count++;
+            if(weighted)
+                weight = parseInt64(in);
+            readClause(in, lits);
+            if(weight == 0) {
+                bool sat=false;
+                for(auto l: lits) {
+                    if(abs(l) >= result.size()) {
+                        {std::lock_guard lock(forPrint); std::cerr << "calculateCost: Parsing error." << std::endl;}
+                        return -1;
+                    }
+                    if ( (l>0) == (result[abs(l)]) ) {
+                        sat = true;
                         break;
-
-                    else if(*in == 'c')
-                        skipLine(in);
-                    else {
-                        count++;
-                        if(weighted)
-                            weight = parseInt64(in);
-                        readClause(in, lits);
-                        if(weight == 0) {
-                            bool sat=false;
-                            for(auto l: lits) {
-                                if(abs(l) >= result.size()) {
-                                    {std::lock_guard lock(forPrint); std::cerr << "calculateCost: Parsing error." << std::endl;}
-                                    return -1;
-                                }
-                                if ( (l>0) == (result[abs(l)]) ) {
-                                    sat = true;
-                                    break;
-                                }
-                            }
-                            if(!sat) {
-                                {std::lock_guard lock(forPrint); std::cerr << "calculateCost: NON SAT !" << std::endl;}
-                                return -1;
-                            }
-                        } else {
-                            bool sat=false;
-                            for(auto l: lits) {
-                                if(abs(l) >= result.size()) {
-                                    {std::lock_guard lock(forPrint); std::cerr << "calculateCost: Parsing error." << std::endl;}
-                                    return -1;
-                                }
-
-                                if ( (l>0) == (result[abs(l)]) ) {
-                                    sat = true;
-                                    break;
-                                }
-                            }
-                            if(!sat) {
-                                cost += weight;
-                            }
-                        }
                     }
                 }
+                if(!sat) {
+                    {std::lock_guard lock(forPrint); std::cerr << "calculateCost: NON SAT !" << std::endl;}
+                    return -1;
+                }
+            } else {
+                bool sat=false;
+                for(auto l: lits) {
+                    if(abs(l) >= result.size()) {
+                        {std::lock_guard lock(forPrint); std::cerr << "calculateCost: Parsing error." << std::endl;}
+                        return -1;
+                    }
+
+                    if ( (l>0) == (result[abs(l)]) ) {
+                        sat = true;
+                        break;
+                    }
+                }
+                if(!sat) {
+                    cost += weight;
+                }
+            }
+        }
+    }
 
     gzclose(in_);
     return cost;

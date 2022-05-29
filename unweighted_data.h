@@ -197,7 +197,6 @@ std::vector<std::string> data_unweighted = {"normalized-par8-2.opb.msat.wcnf.gz"
 "splitedReads_414.matrix.wcnf.gz",
 "splitedReads_160.matrix.wcnf.gz",
 "rev44-10.wcnf.gz",
-//"johnson8-2-4.clq.wcnf.gz",
 "rand414_l2.wcnf.gz",
 "AES2-50-55.wcnf.gz",
 "b17_C-mbd14-0390.wcnf.gz",

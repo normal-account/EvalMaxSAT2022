@@ -1,5 +1,7 @@
 #include <zlib.h>
-
+#include <iostream>
+#include <cmath>
+#include <cassert>
 
 static const int buffer_size = 1048576;
 
@@ -88,7 +90,7 @@ static int parseInt(B& in) {
     if      (*in == '-') neg = true, ++in;
     else if (*in == '+') ++in;
     if (*in < '0' || *in > '9')
-        fprintf(stderr, "PARSE ERROR!!! Unexpected char: %c\n", *in);//, exit(3);
+        fprintf(stderr, "PARSE ERROR!!! Unexpected char in parseInt: %c\n", *in), exit(3);
 
     // Convert string number to int
     while (*in >= '0' && *in <= '9')
@@ -104,20 +106,42 @@ static int64_t parseInt64(B& in) {
     int64_t     val = 0;
     bool    neg = false;
     skipWhitespace(in);
-    if (*in == 'h') { // Experimental
-        ++in;
-        ++in;
-        return 0;
-    }
     if      (*in == '-') neg = true, ++in;
     else if (*in == '+') ++in;
-    if (*in < '0' || *in > '9') fprintf(stderr, "PARSE ERROR! Unexpected char: %c\n", *in), exit(3);
+    if (*in < '0' || *in > '9') {
+        fprintf(stderr, "PARSE ERROR! Unexpected char in parseInt64: %c\n", *in);
+        assert(false);
+        exit(3);
+    }
     while (*in >= '0' && *in <= '9')
         val = val*10 + (*in - '0'),
                 ++in;
     return neg ? -val : val;
 }
 
+
+template<class B>
+static unsigned long long int parseWeight(B& in) {
+
+    unsigned long long int     val = 0;
+    skipWhitespace(in);
+    if (*in == 'h') {
+        ++in;
+        if(*in != ' ') {
+            fprintf(stderr, "o PARSE ERROR! Unexpected char in parseWeight: %c\n", *in);
+            exit(3);
+        }
+        //++in;
+        return (unsigned long long int)-1;
+    }
+    if      (*in == '-') fprintf(stderr, "o PARSE ERROR! Unexpected negative weight\n", *in), exit(3);
+    else if (*in == '+') ++in;
+    if (*in < '0' || *in > '9') fprintf(stderr, "o PARSE ERROR! Unexpected char in parseWeight: %c\n", *in), exit(3);
+    while (*in >= '0' && *in <= '9')
+        val = val*10 + (*in - '0'),
+                ++in;
+    return val;
+}
 
 // String matching: in case of a match the input iterator will be advanced the corresponding
 // number of characters.

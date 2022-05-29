@@ -45,18 +45,13 @@ public:
     }
 
     int addWeightedClause(std::vector<int> clause, t_weight weight) {
-        //assert(weight==1);
         // If it's a unit clause and its literal doesn't exist as a soft var already, add soft variable
         if(clause.size() == 1) {
-            //if(!isSoft(abs(clause[0]))) {   // TODO : pas besoin de cette vérification dans le cas weighted
+            // add weight to the soft var
+            setVarSoft(abs(clause[0]), clause[0] > 0, weight);
 
-                // The weight is zero by default (for hard vars), change it to the right weight if it's a soft var
-                setVarSoft(abs(clause[0]), clause[0] > 0, weight);
-
-                // Return instantly instead of adding a new var at the end because the soft var represents the unit clause anyway.
-                // However, if the soft var already exists as soft, then we don't want to return as we want a new var to represent the 2nd clause.
-                return 0;
-            //}
+            // Return instantly instead of adding a new var at the end because the soft var represents the unit clause anyway.
+            return clause[0];
         }
 
         // Soft clauses are "hard" clauses with a soft var at the end. Create said soft var for our clause.
@@ -69,6 +64,71 @@ public:
 
         return r;
     }
+
+
+   std::string savePourTest_file;
+   bool parse(const std::string& filePath) {
+       auto gz = gzopen( filePath.c_str(), "rb");
+
+       savePourTest_file = filePath;
+       StreamBuffer in(gz);
+       t_weight weightForHardClause = -1;
+
+       if(*in == EOF) {
+           return false;
+       }
+
+       std::vector < std::tuple < std::vector<int>, t_weight> > softClauses;
+
+       for(;;) {
+           skipWhitespace(in);
+
+           if(*in == EOF) {
+               break;
+           }
+
+           if(*in == 'c') {
+               skipLine(in);
+           } else if(*in == 'p') { // Old format
+               ++in;
+               if(*in != ' ') {
+                   std::cerr << "o PARSE ERROR! Unexpected char: " << static_cast<char>(*in) << std::endl;
+                   return false;
+               }
+               skipWhitespace(in);
+
+               if(eagerMatch(in, "wcnf")) {
+                   parseInt(in); // # Var
+                   parseInt(in); // # Clauses
+                   weightForHardClause = parseWeight(in);
+               } else {
+                   std::cerr << "o PARSE ERROR! Unexpected char: " << static_cast<char>(*in) << std::endl;
+                   return false;
+               }
+           } else {
+               t_weight weight = parseWeight(in);
+               std::vector<int> clause = readClause(in);
+
+               if(weight == weightForHardClause) {
+                   addClause(clause);
+               } else {
+                   // If it is a soft clause, we have to save it to add it once we are sure we know the total number of variables.
+                   softClauses.push_back({clause, weight});
+               }
+           }
+       }
+
+       setNInputVars(nVars());
+       for(auto & [clause, weight]: softClauses) {
+           addWeightedClause(clause, weight);
+       }
+
+       gzclose(gz);
+       return true;
+    }
+
+private :
+
 
    std::vector<int> readClause(StreamBuffer &in) {
        std::vector<int> clause;
@@ -87,49 +147,7 @@ public:
        return clause;
    }
 
-   std::string savePourTest_file;
-   bool parse(const std::string& filePath) {
-       auto gz = gzopen( filePath.c_str(), "rb");
 
-       savePourTest_file = filePath;
-       StreamBuffer in(gz);
-
-       if(*in == EOF) {
-           return false;
-       }
-
-       std::vector < std::tuple < std::vector<int>, t_weight> > softClauses;
-
-       for(;;) {
-           skipWhitespace(in);
-
-           if(*in == EOF) {
-               break;
-           }
-
-           if(*in == 'c')
-               skipLine(in);
-           else {
-               t_weight weight = parseInt64(in);
-               std::vector<int> clause = readClause(in);
-
-               if(weight == 0) {
-                   addClause(clause);
-               } else {
-                   // If it is a soft clause, we have to save it to add it once we are sure we know the total number of variables.
-                   softClauses.push_back({clause, weight});
-               }
-           }
-       }
-
-       setNInputVars(nVars());
-       for(auto & [clause, weight]: softClauses) {
-           addWeightedClause(clause, weight);
-       }
-
-       gzclose(gz);
-       return true;
-    }
 
 };
 VirtualMAXSAT::~VirtualMAXSAT() {}

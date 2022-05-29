@@ -1,3 +1,5 @@
+
+
 std::vector<std::string> data_weighted = {"heart_test_8_DNF_3_5.wcnf.gz",
 "8.wcsp.log.wcnf.gz",
 "ionosphere_test_7_DNF_1_5.wcnf.gz",

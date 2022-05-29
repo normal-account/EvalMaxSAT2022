@@ -34,9 +34,11 @@ static void readClause(B& in, std::vector<int>& lits) {
     }
 }
 
-static long calculateCost(const std::string & file, const std::vector<bool> &result) {
+
+t_weight calculateCost(const std::string & file, const std::vector<bool> &result) {
     long cost = 0;
     auto in_ = gzopen(file.c_str(), "rb");
+    t_weight weightForHardClause = -1;
 
                 StreamBuffer in(in_);
 
@@ -54,27 +56,52 @@ static long calculateCost(const std::string & file, const std::vector<bool> &res
                     if(*in == EOF)
                         break;
 
-                    else if(*in == 'c')
+                    else if(*in == 'c') {
                         skipLine(in);
+                    } else if(*in == 'p') { // Old format
+                      ++in;
+                      if(*in != ' ') {
+                          std::cerr << "o PARSE ERROR! Unexpected char: " << static_cast<char>(*in) << std::endl;
+                          return false;
+                      }
+                      skipWhitespace(in);
+
+                      if(eagerMatch(in, "wcnf")) {
+                          parseInt(in); // # Var
+                          parseInt(in); // # Clauses
+                          weightForHardClause = parseWeight(in);
+                      } else {
+                          std::cerr << "o PARSE ERROR! Unexpected char: " << static_cast<char>(*in) << std::endl;
+                          return false;
+                      }
+                  }
                     else {
                         count++;
-                        if(weighted)
-                            weight = parseInt64(in);
+                        weight = parseWeight(in);
                         readClause(in, lits);
-                        if(weight == 0) {
+                        if(weight == weightForHardClause) {
                             bool sat=false;
                             for(auto l: lits) {
-                                assert(abs(l) < result.size());
+                                if(abs(l) >= result.size()) {
+                                    std::cerr << "calculateCost: Parsing error." << std::endl;
+                                    return -1;
+                                }
                                 if ( (l>0) == (result[abs(l)]) ) {
                                     sat = true;
                                     break;
                                 }
                             }
-                            assert(sat);
+                            if(!sat) {
+                                std::cerr << "calculateCost: NON SAT !" << std::endl;
+                                return -1;
+                            }
                         } else {
                             bool sat=false;
                             for(auto l: lits) {
-                                assert(abs(l) < result.size());
+                                if(abs(l) >= result.size()) {
+                                    std::cerr << "calculateCost: Parsing error." << std::endl;
+                                    return -1;
+                                }
 
                                 if ( (l>0) == (result[abs(l)]) ) {
                                     sat = true;
@@ -999,12 +1026,18 @@ public:
         } else {
             // In the case of weighted formula
 
-            assert( mapWeight2Assum[_weight[var]].count( (value?1:-1)*var ) );
-            mapWeight2Assum[_weight[var]].erase( (value?1:-1)*var );
 
             if(model[var] == value) {
+
+                assert( mapWeight2Assum[_weight[var]].count( (value?1:-1)*var ) );
+                mapWeight2Assum[_weight[var]].erase( (value?1:-1)*var );
+
                 _weight[var] += weight;
             } else {
+
+                assert( mapWeight2Assum[_weight[var]].count( -(value?1:-1)*var ) );
+                mapWeight2Assum[_weight[var]].erase( -(value?1:-1)*var );
+
                 if( _weight[var] > weight ) {
                     _weight[var] -= weight;
                     cost += weight;
@@ -1022,7 +1055,7 @@ public:
                 setIsWeightedVerif(); // TODO : remplacer par  mapWeight2Assum
             }
             if(_weight[var] > 0) {
-                mapWeight2Assum[_weight[var]].insert( (value?1:-1)*var );
+                mapWeight2Assum[_weight[var]].insert( (model[var]?1:-1)*var );
             }
         }
 
@@ -1288,7 +1321,7 @@ private:
 
         for(auto it = _assumption.begin(); it != _assumption.end(); ) {
             int lit = *it;
-            ++it;
+            ++it; // We increment "it" here beacause addClause({lit}) will remove lit from assumption
             if( _weight[ abs(lit) ] >= costRemovedAssumLOCAL ) {
                 nbHarden++;
                 addClause({lit});
