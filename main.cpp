@@ -28,11 +28,11 @@ void signalHandler( int signum ) {
 
 
 
-int test() {
+int test(bool weighted=false) {
 
-    for(unsigned int id = 13; id<data_weighted.size(); id++) {
+    for(unsigned int id = 0 ; id < (weighted?data_weighted.size():data_unweighted.size()) ; id++) {
         srand(0);
-        std::cout << id << ":" << data_weighted[id] << std::endl;
+        std::cout << id << ":" << (weighted?data_weighted[id]:data_unweighted[id]) << std::endl;
 
 
         if( (id==34) || (id==45)  )
@@ -44,13 +44,13 @@ int test() {
 
         monMaxSat = new EvalMaxSAT();
 
-        std::string filePath = BENCHMARK_FILES_FOLDER + data_weighted[id]; // For a custom path
+        std::string filePath = (weighted?BENCHMARK_FILES_FOLDER_WEIGHTED:BENCHMARK_FILES_FOLDER_UNWEIGHTED) + (weighted?data_weighted[id]:data_unweighted[id]); // For a custom path
 
         MaLib::Chrono C( filePath);
 
 
         if(!monMaxSat->parse(filePath)) { // TODO : rendre robuste au header mismatch
-            std::cerr << "Impossible de lire le fichier" << std::endl;
+            std::cerr << "Impossible de lire le fichier : " << filePath << std::endl;
             assert(false);
             return -1;
         }
@@ -61,10 +61,10 @@ int test() {
             return -1;
         }
 
-        if( monMaxSat->getCost() != data_weighted_cost[id]) {
+        if( monMaxSat->getCost() != (weighted?data_weighted_cost[id]:data_unweighted_cost[id])) {
             std::cerr << "id = " << id << std::endl;
             std::cerr << "file = " << filePath << std::endl;
-            std::cerr << "Résultat éroné : \n   Trouvé : " << monMaxSat->getCost() << "\n  Attendu : " << data_weighted_cost[id] << std::endl;
+            std::cerr << "Résultat éroné : \n   Trouvé : " << monMaxSat->getCost() << "\n  Attendu : " << (weighted?data_weighted_cost[id]:data_unweighted_cost[id]) << std::endl;
             std::vector<bool> assign;
             assign.push_back(0); // fake var_0
 
@@ -98,7 +98,8 @@ int main(int argc, char *argv[])
 {
     if(argc==1) {
         // TODO : cette section est juste pour le dévelopement
-        return test();
+        bool TESTER_LE_CAS_WEIGHTED = false;
+        return test( TESTER_LE_CAS_WEIGHTED );
     }
 
     Chrono chrono("c Total time");
@@ -120,6 +121,9 @@ int main(int argc, char *argv[])
     unsigned int coefMinimizeTime=2;
     app.add_option("--coef_minimize", coefMinimizeTime, toString("Multiplying coefficient of the time spent to minimize cores (default = ",coefMinimizeTime,")"));
 
+    bool oldOutputFormat = false;
+    app.add_flag("--old", oldOutputFormat, "Use old output format.");
+
     CLI11_PARSE(app, argc, argv);
     ////////////////////////////////////////
 
@@ -137,28 +141,30 @@ int main(int argc, char *argv[])
         return 0;
     }
 
-    ////// PRINT SOLUTION OLD FORMAT //////////////////
-    //    std::cout << "s OPTIMUM FOUND" << std::endl;
-    //    std::cout << "o " << monMaxSat->getCost() << std::endl;
-    //    std::cout << "v";
-    //    for(unsigned int i=1; i<=monMaxSat->nInputVars; i++) {
-    //        if(monMaxSat->getValue(i))
-    //            std::cout << " " << i;
-    //        else
-    //            std::cout << " -" << i;
-    //    }
-    //    std::cout << std::endl;
-    ///////////////////////////////////////
-
-    ////// PRINT SOLUTION NEW FORMAT //////////////////
-    std::cout << "s OPTIMUM FOUND" << std::endl;
-    std::cout << "o " << monMaxSat->getCost() << std::endl;
-    std::cout << "v ";
-    for(unsigned int i=1; i<=monMaxSat->nInputVars; i++) {
-        std::cout << monMaxSat->getValue(i);
+    if(oldOutputFormat) {
+        ////// PRINT SOLUTION OLD FORMAT //////////////////
+        std::cout << "s OPTIMUM FOUND" << std::endl;
+        std::cout << "o " << monMaxSat->getCost() << std::endl;
+        std::cout << "v";
+        for(unsigned int i=1; i<=monMaxSat->nInputVars; i++) {
+            if(monMaxSat->getValue(i))
+                std::cout << " " << i;
+            else
+                std::cout << " -" << i;
+        }
+        std::cout << std::endl;
+        ///////////////////////////////////////
+    } else {
+        ////// PRINT SOLUTION NEW FORMAT //////////////////
+        std::cout << "s OPTIMUM FOUND" << std::endl;
+        std::cout << "o " << monMaxSat->getCost() << std::endl;
+        std::cout << "v ";
+        for(unsigned int i=1; i<=monMaxSat->nInputVars; i++) {
+            std::cout << monMaxSat->getValue(i);
+        }
+        std::cout << std::endl;
+        ///////////////////////////////////////
     }
-    std::cout << std::endl;
-    ///////////////////////////////////////
 
 
     delete monMaxSat;

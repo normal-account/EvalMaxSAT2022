@@ -20,13 +20,13 @@
 #include "weighted_data.h"
 #include "lib/CLI11.hpp"
 #include "lib/EvalMaxSAT/src/ParseUtils.h"
+#include "config.h"
 
 // g++ EvalBenchmarking.cpp -o EvalBenchmarking -lpthread -lz
 // Warning : if you interrupt the process, the threads will keep going as I didn't handle that case
 
 // !!! Modify the following args !!!
 std::string MAXSAT_BIN_PATH = "./EvalMaxSAT_bin";
-std::string BENCHMARK_FILES_FOLDER = "/home/florent/wcnf/";
 std::string OUTPUT_FILE = "bench.txt";
 std::string BENCHMARK_TIMEOUT = "3600"; // In seconds
 int NUMBER_OF_THREADS = 1;
@@ -306,7 +306,7 @@ void run_benchmark( int threadNumber) {
 
     int resultIndex = 0;
     for (int i = startIndex; i < startIndex + instancesPerThreads[threadNumber] - 1; i++, resultIndex++) {
-        std::string path = BENCHMARK_FILES_FOLDER + (weighted_dataset?data_weighted[i]:data_unweighted[i]);
+        std::string path = (weighted_dataset?BENCHMARK_FILES_FOLDER_WEIGHTED:BENCHMARK_FILES_FOLDER_UNWEIGHTED) + (weighted_dataset?data_weighted[i]:data_unweighted[i]);
 
         if (!file_exists(path))
         {
@@ -346,11 +346,11 @@ int main(int argc, char *argv[]) {
     
     app.add_option("bin_path", MAXSAT_BIN_PATH, "MAXSAT binary path")->check(CLI::ExistingFile)->required();
     
-    app.add_option("benchmark_files_folder", BENCHMARK_FILES_FOLDER, "Benchmark files folder")->check(CLI::ExistingDirectory)->required();
+    //app.add_option("benchmark_files_folder", BENCHMARK_FILES_FOLDER, "Benchmark files folder")->check(CLI::ExistingDirectory)->required();
     
     app.add_option("-o", OUTPUT_FILE, "output (defaut = bench.txt)");
 
-    app.add_flag("-w", weighted_dataset, "Use a weighted dataset.");
+    app.add_flag("-w", weighted_dataset, "Use a weighted dataset (default = unweighted dataset).");
     
     app.add_option("-p", NUMBER_OF_THREADS, toString("Number of threads (default = ", NUMBER_OF_THREADS,")"));
     
