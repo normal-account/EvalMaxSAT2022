@@ -26,6 +26,8 @@ public:
 
     CadicalInterface()
         : solver(new CaDiCaL::Solver()) {
+
+        solver->set("stabilize", 0);
     }
     
     VirtualSAT* clone() override {

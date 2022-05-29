@@ -17,6 +17,10 @@
 
 using namespace MaLib;
 
+MaLib::Chrono C_solve("Cumulative time spent solving SAT formulas");
+MaLib::Chrono C_fastMinimize("Cumulative time spent for fastMinimize");
+MaLib::Chrono C_fullMinimize("Cumulative time spent for fullMinimize");
+MaLib::Chrono C_extractAM("Cumulative time spent for extractAM");
 
 
 template<class B>
@@ -447,12 +451,41 @@ public:
         _weight.push_back(0);           //
         model.push_back(false);         // Fake lit with id=0
         mapAssum2card.push_back(-1);    //
+
+
+        C_solve.tic();
+        C_solve.pause(true);
+        C_fastMinimize.tic();
+        C_fastMinimize.pause(true);
+        C_fullMinimize.tic();
+        C_fullMinimize.pause(true);
+        C_extractAM.tic();
+        C_extractAM.pause(true);
     }
 
     virtual ~EvalMaxSAT();
 
    void addClause( const std::vector<int> &clause) override {
-       // TODO : si clause contient un seul literal qui est soft, le traiter ici ?
+       if(clause.size() == 1) {
+           if(_weight[abs(clause[0])] != 0) {
+
+               if( (clause[0]>0) == model[abs(clause[0])] ) {
+                   assert( mapWeight2Assum[ _weight[abs(clause[0])] ].count( clause[0] ) );
+                   mapWeight2Assum[ _weight[abs(clause[0])] ].erase( clause[0] );
+                   _weight[abs(clause[0])] = 0;
+                   _assumption.erase(clause[0]);
+               } else {
+                   assert( mapWeight2Assum[ _weight[abs(clause[0])] ].count( -clause[0] ) );
+                   mapWeight2Assum[ _weight[abs(clause[0])] ].erase( -clause[0] );
+                   cost += _weight[abs(clause[0])];
+                   _weight[abs(clause[0])] = 0;
+                   _assumption.erase(-clause[0]);
+               }
+
+               return;
+           }
+       }
+
        solver->addClause( clause );
        for(auto s : solverForMinimize) {
            s->addClause( clause );
@@ -550,6 +583,8 @@ public:
                 }
             }
         }
+
+        MonPrint("\t\t\tMain Thread: cost = ", cost, " + ", minWeight);
         cost += minWeight;
 
         CL_LitToUnrelax.pushAll(uselessLit);
@@ -670,6 +705,8 @@ public:
 
     bool solve() override {
 
+
+
         // Reinit CL
         CL_ConflictToMinimize.clear();
         CL_LitToUnrelax.clear();
@@ -679,7 +716,10 @@ public:
         nVarsInSolver = nVars(); // Freeze nVarsInSolver in time
 
         MonPrint("\t\t\tMain Thread: extractAM...");
+        C_extractAM.pause(false);
         extractAM();
+        C_extractAM.pause(true);
+
 
         _assumption.clear();    // TODO : garder _assumption a jour pour ne pas avoir a réinitialiser en debut de solve()
         for(unsigned int i=1; i<_weight.size(); i++) {
@@ -712,6 +752,7 @@ public:
 
                 bool conflictFound;
 
+                C_solve.pause(false);
                 if(firstSolve) {
                     MonPrint("solve(",_assumption.size(),")...");
                     conflictFound = (solver->solve(_assumption) == false);
@@ -719,6 +760,7 @@ public:
                     MonPrint("solveLimited(",_assumption.size(),")...");
                     conflictFound = (solver->solveLimited(_assumption, 10000) == -1);
                 }
+                C_solve.pause(true);
 
                 if(!conflictFound) {
                     MonPrint("\t\t\tMain Thread: Solve() is not false!");
@@ -778,6 +820,19 @@ public:
                     if(bestUnminimizedConflict.empty()) {
                         cost = -1;
                         return false;
+                    }
+
+                    if(bestUnminimizedConflict.size() == 1) {
+                        MonPrint("\t\t\tMain Thread: conflict size = 1");
+                        MonPrint("\t\t\tMain Thread: cost = ", cost, " + ",  _weight[ abs(bestUnminimizedConflict[0]) ]);
+                        cost += _weight[ abs(bestUnminimizedConflict[0]) ];
+
+                        assert( mapWeight2Assum[_weight[abs(bestUnminimizedConflict[0])]].count( bestUnminimizedConflict[0] ) );
+                        mapWeight2Assum[_weight[abs(bestUnminimizedConflict[0])]].erase( bestUnminimizedConflict[0] );
+                        _weight[ abs(bestUnminimizedConflict[0]) ] = 0;
+                        assert(_assumption.count(bestUnminimizedConflict[0]));
+                        _assumption.erase(bestUnminimizedConflict[0]);
+                        continue;
                     }
 
 
@@ -986,6 +1041,7 @@ private:
 
 
     bool fullMinimize(VirtualSAT* solverForMinimize, std::set<int> &conflict, std::vector<int> &uselessLit, long timeRef) {
+        C_fullMinimize.pause(false);
         MaLib::Chrono chrono;
         bool minimum = true;
 
@@ -1084,11 +1140,13 @@ private:
             conflict.erase(lit);
         }
 
+        C_fullMinimize.pause(true);
         return minimum;
     }
 
 
     bool fastMinimize(VirtualSAT* solverForMinimize, std::list<int> &conflict) {
+        C_fastMinimize.pause(false);
 
         if(isWeighted()) {
             conflict.sort([&](int litA, int litB){
@@ -1102,6 +1160,7 @@ private:
 
             if(chrono.tacSec() > _timeOutFastMinimize) {  // Hyperparameter
                 MonPrint("TIMEOUT fastMinimize!");
+                C_fastMinimize.pause(true);
                 return false;
             }
 
@@ -1122,6 +1181,7 @@ private:
             }
         }
 
+        C_fastMinimize.pause(true);
         return true;
     }
 

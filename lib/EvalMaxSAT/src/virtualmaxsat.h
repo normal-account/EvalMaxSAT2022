@@ -48,7 +48,7 @@ public:
         //assert(weight==1);
         // If it's a unit clause and its literal doesn't exist as a soft var already, add soft variable
         if(clause.size() == 1) {
-            if(!isSoft(abs(clause[0]))) {   // TODO : pas besoin de cette vérification dans le cas weighted
+            //if(!isSoft(abs(clause[0]))) {   // TODO : pas besoin de cette vérification dans le cas weighted
 
                 // The weight is zero by default (for hard vars), change it to the right weight if it's a soft var
                 setVarSoft(abs(clause[0]), clause[0] > 0, weight);
@@ -56,7 +56,7 @@ public:
                 // Return instantly instead of adding a new var at the end because the soft var represents the unit clause anyway.
                 // However, if the soft var already exists as soft, then we don't want to return as we want a new var to represent the 2nd clause.
                 return 0;
-            }
+            //}
         }
 
         // Soft clauses are "hard" clauses with a soft var at the end. Create said soft var for our clause.
