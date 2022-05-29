@@ -17,6 +17,7 @@
 #include <zlib.h>
 
 #include "unweighted_data.h"
+#include "weighted_data.h"
 #include "lib/CLI11.hpp"
 #include "lib/EvalMaxSAT/src/ParseUtils.h"
 
@@ -29,6 +30,7 @@ std::string BENCHMARK_FILES_FOLDER = "/home/florent/wcnf/";
 std::string OUTPUT_FILE = "bench.txt";
 std::string BENCHMARK_TIMEOUT = "3600"; // In seconds
 int NUMBER_OF_THREADS = 1;
+bool weighted_dataset=false;
 // #################################
 
 static std::mutex forPrint;
@@ -295,7 +297,7 @@ void run_benchmark( int threadNumber) {
 
     int resultIndex = 0;
     for (int i = startIndex; i < startIndex + instancesPerThreads[threadNumber] - 1; i++, resultIndex++) {
-        std::string path = BENCHMARK_FILES_FOLDER + data_unweighted[i];
+        std::string path = BENCHMARK_FILES_FOLDER + (weighted_dataset?data_weighted[i]:data_unweighted[i]);
 
         if (!file_exists(path))
         {
@@ -309,18 +311,18 @@ void run_benchmark( int threadNumber) {
         std::string result = exec(cmdChar);
         if (result == "c Interrupt signal (15) received.\n")
         {
-            result = BENCHMARK_TIMEOUT + "\t" + data_unweighted[ i ];
+            result = BENCHMARK_TIMEOUT + "\t" + (weighted_dataset?data_weighted[i]:data_unweighted[i]);
             timeoutPerThread[threadNumber]++;
         }
         else
         {
-            std::string parsedResult = parse_result( path, data_unweighted_cost[i], result, threadNumber );
+            std::string parsedResult = parse_result( path, (weighted_dataset?data_weighted_cost[i]:data_unweighted_cost[i]), result, threadNumber );
             if (parsedResult == "-1") {
                 {std::lock_guard lock(forPrint);std::cerr << "Parsing error in " << path << " (caused by timeout). Skipping file." << std::endl;}
                 benchmarksNotFound++;
                 continue;
             }
-            result = parsedResult + "\t" + data_unweighted[ i ];
+            result = parsedResult + "\t" + (weighted_dataset?data_weighted[i]:data_unweighted[i]);
         }
         threadResults[ threadNumber ][ resultIndex ] = result;
         {std::lock_guard lock(forPrint);std::cout << result << std::endl;}
@@ -333,13 +335,13 @@ int main(int argc, char *argv[]) {
 
     CLI::App app{"EvalMaxSAT Chenchmarking CLI"};
     
-    
     app.add_option("bin_path", MAXSAT_BIN_PATH, "MAXSAT binary path")->check(CLI::ExistingFile)->required();
     
     app.add_option("benchmark_files_folder", BENCHMARK_FILES_FOLDER, "Benchmark files folder")->check(CLI::ExistingDirectory)->required();
     
     app.add_option("-o", OUTPUT_FILE, "output (defaut = bench.txt)");
-    
+
+    app.add_flag("-w", weighted_dataset, "Use a weighted dataset.");
     
     app.add_option("-p", NUMBER_OF_THREADS, toString("Number of threads (default = ", NUMBER_OF_THREADS,")"));
     
@@ -356,8 +358,9 @@ int main(int argc, char *argv[]) {
     timeoutPerThread.resize(NUMBER_OF_THREADS);
     benchmarkThreads.reserve(NUMBER_OF_THREADS);
 
-    int generalNumberOfInstances = data_unweighted.size() / NUMBER_OF_THREADS;
-    int rest = data_unweighted.size() % NUMBER_OF_THREADS;
+    int generalNumberOfInstances = (weighted_dataset?data_weighted.size():data_unweighted.size()) / NUMBER_OF_THREADS;
+    int rest = (weighted_dataset?data_weighted.size():data_unweighted.size()) % NUMBER_OF_THREADS;
+
     for (int i = 0; i < NUMBER_OF_THREADS; i++) {
         timePerThread[i] = 0; timeoutPerThread[i] = 0;
         instancesPerThreads[i] = generalNumberOfInstances;
@@ -390,7 +393,7 @@ int main(int argc, char *argv[]) {
     }
 
 
-    std::string conclusion = std::to_string( data_unweighted.size() - nTimeouts - benchmarksNotFound) +
+    std::string conclusion = std::to_string( (weighted_dataset?data_weighted.size():data_unweighted.size()) - nTimeouts - benchmarksNotFound) +
             " benchmarks have been successfully executed over a total time of "
             + std::to_string(totalTime) + " seconds. " + std::to_string(nTimeouts) + " benchmarks have failed due to a timeout.";
 
