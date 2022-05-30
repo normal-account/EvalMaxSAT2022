@@ -138,7 +138,8 @@ class EvalMaxSAT : public VirtualMAXSAT {
     MaLib::CommunicationList< std::tuple<std::list<int>, long> > CL_ConflictToMinimize;
     MaLib::CommunicationList< int > CL_LitToUnrelax; // Variables to remove from the assumptions and put back in core
     MaLib::CommunicationList< int > CL_LitToRelax; // Variables to try to relax the cardinality constraint with which they're related
-    MaLib::CommunicationList< std::tuple<std::vector<int>, bool, t_weight> > CL_CardToAdd; // Cores for which to add cardinality constraints
+    //MaLib::CommunicationList< std::tuple<std::vector<int>, bool, t_weight> > CL_CardToAdd; // Cores for which to add cardinality constraints
+    MaLib::CommunicationList<int> CL_newAssumToConsider;    // Delay before taking into account the new assum (Replaces the old structure CL_CardToAdd)
     std::atomic<unsigned int> numberMinimizeThreadRunning;
     /////
 
@@ -607,18 +608,61 @@ public:
         cost += minWeight;
 
         CL_LitToUnrelax.pushAll(uselessLit);
-/*
-        std::cout << "useless:" << std::endl;
-        for(auto lit: uselessLit) {
-            std::cout << "_weight["<<abs(lit)<<"] = " << _weight[abs(lit)] << std::endl;
-        }
-        std::cout << "----" << std::endl;
-*/
         if(L.size() > 1) {
-            CL_CardToAdd.push({L, !completed, minWeight});
+            //CL_CardToAdd.push({L, !completed, minWeight});
+            addCardToCL(L, !completed, minWeight);
         }
 
         MonPrint("size conflict after Minimize: ", conflict.size());
+    }
+
+    void addCardToCL(const std::vector<int>& L, bool canBeExhaust, t_weight weight) {
+        assert(L.size() > 1);
+
+        std::shared_ptr<VirtualCard> card = std::make_shared<CardIncremental_Lazy>(this, L);
+        //std::shared_ptr<VirtualCard> card = std::make_shared<Card_Lazy_OE>(this, std::get<0>(*element));
+
+        // save_card contains our cardinality constraints
+        save_card.push_back( {card, 1, weight} );
+
+        int k = 1;
+
+        int newAssumForCard = card->atMost(k); // Gets the soft variable corresponding to the cardinality constraint with RHS = 1
+
+        assert(newAssumForCard != 0);
+
+        // TODO: Exhaust semble n'avoir pas d'impacte sur les performences ?
+        /*
+        MonPrint("solveLimited for Exhaust...");
+        if(canBeExhaust) { // if clause hasn't been fully minimized
+            // Relax (inc) while the cardinality constraint cannot be satisfied with no other assumptions ; aka exhaust
+            while(solver->solveLimited(std::vector<int>({newAssumForCard}), 10000) == -1) {
+                k++;
+                std::cout << "Exhaust !!!!!" << std::endl;
+                MonPrint("cost = ", cost, " + ", std::get<2>(*element));
+                cost += weight;
+                newAssumForCard = card->atMost(k);
+
+                if(newAssumForCard==0) {
+                    break;
+                }
+            }
+            std::get<1>(save_card.back()) = k; // Update the rhs of the cardinality in the vector with its new value
+        }
+        MonPrint("Exhaust fini!");
+        */
+
+        if(newAssumForCard != 0) {
+            assert( _weight[abs(newAssumForCard)] == 0 );
+            _weight[abs(newAssumForCard)] = weight;
+            mapWeight2Assum[ _weight[abs(newAssumForCard)] ].insert( newAssumForCard );
+            // Put cardinality constraint in mapAssum2card associated to softVar as index in mapAssum2card
+            mapAssum2card[ abs(newAssumForCard) ] = save_card.size()-1;
+
+
+            // _assumption.insert( newAssumForCard );
+            CL_newAssumToConsider.push( newAssumForCard ); // Delay before taking into account the new assum
+        }
     }
 
     void threadMinimize(unsigned int num, bool fastMinimize) {
@@ -634,6 +678,8 @@ public:
         }
     }
 
+    /*
+    // INFORMATION : la création de la card est maintenent fait a la fin de la minimisation et la nouvelle card a considéré est stoqué dans CL_newAssumToConsider
     void apply_CL_CardToAdd() {
         while(CL_CardToAdd.size()) {
             // Each "set" in CL_CardToAdd contains the literals of a core
@@ -653,28 +699,26 @@ public:
 
             assert(newAssumForCard != 0);
 
-            // TODO: Exhaust semble n'avoir pas d'impacte sur les performences ?
-            /*
-            MonPrint("solveLimited for Exhaust...");
-            if(std::get<1>(*element)) { // if clause hasn't been fully minimized
-                // Relax (inc) while the cardinality constraint cannot be satisfied with no other assumptions ; aka exhaust
-                while(solver->solveLimited(std::vector<int>({newAssumForCard}), 10000) == -1) {
-                    k++;
-                    std::cout << "Exhaust !!!!!" << std::endl;
-                    MonPrint("cost = ", cost, " + ", std::get<2>(*element));
-                    cost += std::get<2>(*element);
-                    newAssumForCard = card->atMost(k);
+//            MonPrint("solveLimited for Exhaust...");
+//            if(std::get<1>(*element)) { // if clause hasn't been fully minimized
+//                // Relax (inc) while the cardinality constraint cannot be satisfied with no other assumptions ; aka exhaust
+//                while(solver->solveLimited(std::vector<int>({newAssumForCard}), 10000) == -1) {
+//                    k++;
+//                    std::cout << "Exhaust !!!!!" << std::endl;
+//                    MonPrint("cost = ", cost, " + ", std::get<2>(*element));
+//                    cost += std::get<2>(*element);
+//                    newAssumForCard = card->atMost(k);
 
-                    if(newAssumForCard==0) {
-                        break;
-                    }
-                }
-                std::get<1>(save_card.back()) = k; // Update the rhs of the cardinality in the vector with its new value
+//                    if(newAssumForCard==0) {
+//                        break;
+//                    }
+//                }
+//                std::get<1>(save_card.back()) = k; // Update the rhs of the cardinality in the vector with its new value
 
 
-            }
-            MonPrint("Exhaust fini!");
-            */
+//            }
+//            MonPrint("Exhaust fini!");
+
 
             if(newAssumForCard != 0) {
                 assert( _weight[abs(newAssumForCard)] == 0 );
@@ -683,6 +727,19 @@ public:
                 _assumption.insert( newAssumForCard );
                 // Put cardinality constraint in mapAssum2card associated to softVar as index in mapAssum2card
                 mapAssum2card[ abs(newAssumForCard) ] = save_card.size()-1;
+            }
+        }
+    }
+    */
+
+    void apply_CL_newAssumToConsider() {
+        while(CL_newAssumToConsider.size()) {
+            auto lit = CL_newAssumToConsider.pop();
+
+            if(lit) {
+                _assumption.insert( lit.value() );
+            } else {
+                assert(!"should not be possible");
             }
         }
     }
@@ -730,7 +787,8 @@ public:
         CL_ConflictToMinimize.clear();
         CL_LitToUnrelax.clear();
         CL_LitToRelax.clear();
-        CL_CardToAdd.clear();
+        //CL_CardToAdd.clear();
+        CL_newAssumToConsider.clear();
 
         nVarsInSolver = nVars(); // Freeze nVarsInSolver in time
 
@@ -761,7 +819,9 @@ public:
             assert(CL_ConflictToMinimize.size()==0);
             assert(CL_LitToUnrelax.size()==0);
             assert(CL_LitToRelax.size()==0);
-            assert(CL_CardToAdd.size()==0);
+            //assert(CL_CardToAdd.size()==0);
+            assert(CL_newAssumToConsider.size()==0);
+
             numberMinimizeThreadRunning = nbMinimizeThread;
 
             bool firstSolve = true;
@@ -814,8 +874,9 @@ public:
                         MonPrint("\t\t\tMain Thread: CL_LitToRelax.size() = ", CL_LitToRelax.size());
                         apply_CL_LitToRelax();
 
-                        MonPrint("\t\t\tMain Thread: CL_CardToAdd.size() = ", CL_CardToAdd.size());
-                        apply_CL_CardToAdd();
+                        MonPrint("\t\t\tMain Thread: CL_newAssumToConsider.size() = ", CL_newAssumToConsider.size());
+                        //apply_CL_CardToAdd();
+                        apply_CL_newAssumToConsider();
 
 
                         break;
@@ -915,11 +976,13 @@ public:
                         }
 
                         if(conflictMin.size() > 1) {
-                            CL_CardToAdd.push({L, true, minWeight});
+                            //CL_CardToAdd.push({L, true, minWeight});
+                            addCardToCL(L, true, minWeight);
                         }
                         if(firstSolve) {
-                            apply_CL_LitToRelax();      // TODO : On mesure une amélioration en effectuant apply maintenent ?
-                            apply_CL_CardToAdd();       // TODO : On mesure une amélioration en effectuant apply maintenent ?
+                            apply_CL_LitToRelax();          // TODO : On mesure une amélioration en effectuant apply maintenent ?
+                            //apply_CL_CardToAdd();         // TODO : On mesure une amélioration en effectuant apply maintenent ?
+                            apply_CL_newAssumToConsider();  // TODO : On mesure une amélioration en effectuant apply maintenent ?
                         }
 
                         // Removal of literals that are no longer soft from the assumptions
@@ -1263,8 +1326,6 @@ private:
     t_weight currentSolutionCost() {
         t_weight result = cost;
 
-        assert(CL_CardToAdd.size() == 0);
-
         for(unsigned int var=1; var<_weight.size(); var++) {
             if(_weight[var] > 0) {
                 if(getValueImpliesByAssign(var) != model[var]) {
@@ -1336,7 +1397,8 @@ EvalMaxSAT::~EvalMaxSAT() {
     CL_ConflictToMinimize.close();
     CL_LitToUnrelax.close();
     CL_LitToRelax.close();
-    CL_CardToAdd.close();
+    //CL_CardToAdd.close();
+    CL_newAssumToConsider.close();
 
     delete solver;
     for(auto s: solverForMinimize) {
