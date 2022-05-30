@@ -124,7 +124,7 @@ namespace MaLib
                     std::cout << val/1000.0 << " ms" << std::endl;
                 else
                     std::cout << val/1000000.0 << " sec" << std::endl;
-                static double total; total+=val/1000000.0; std::cout<<"Total : "<<total<<" s"<<std::endl; // TODO: Remove this line
+                //static double total; total+=val/1000000.0; std::cout<<"Total : "<<total<<" s"<<std::endl; // TODO: Remove this line
             }
 
         private :

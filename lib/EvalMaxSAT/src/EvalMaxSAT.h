@@ -17,10 +17,10 @@
 
 using namespace MaLib;
 
-MaLib::Chrono C_solve("Cumulative time spent solving SAT formulas");
-MaLib::Chrono C_fastMinimize("Cumulative time spent for fastMinimize");
-MaLib::Chrono C_fullMinimize("Cumulative time spent for fullMinimize");
-MaLib::Chrono C_extractAM("Cumulative time spent for extractAM");
+MaLib::Chrono C_solve("c Cumulative time spent solving SAT formulas");
+MaLib::Chrono C_fastMinimize("c Cumulative time spent for fastMinimize");
+MaLib::Chrono C_fullMinimize("c Cumulative time spent for fullMinimize");
+MaLib::Chrono C_extractAM("c Cumulative time spent for extractAM");
 
 
 template<class B>
