@@ -723,8 +723,8 @@ public:
 public:
 
     bool solve() override {
-
-
+        unsigned int nbSecondSolveMin = 20;      // TODO: Magic number
+        unsigned int timeOutForSecondSolve = 60; // TODO: Magic number
 
         // Reinit CL
         CL_ConflictToMinimize.clear();
@@ -857,8 +857,31 @@ public:
                         continue;
                     }
 
+                    MaLib::Chrono chronoForBreak;
+                    unsigned int nbSecondSolve = 0;
 
-                    //MaLib::Chrono chronoForBreak;
+                    MonPrint("\t\t\tMain Thread: Second solve...");
+
+                    // Shuffle assumptions in a loop to hopefully get a smaller core from the SatSolver
+                    std::vector<int> forSolve(_assumption.begin(), _assumption.end());
+                    while((nbSecondSolve < nbSecondSolveMin) || (chronoLastSolve.tac() >= chronoForBreak.tac())) {
+                        if(bestUnminimizedConflict.size() == 1)
+                            break;
+                        nbSecondSolve++;
+                        if(chronoForBreak.tacSec() > timeOutForSecondSolve)
+                            break;
+                        if(nbSecondSolve > 10000)
+                            break;
+
+                        std::random_shuffle(forSolve.begin(), forSolve.end());
+
+                        bool res = solver->solve(forSolve);
+                        assert(!res);
+
+                        if( bestUnminimizedConflict.size() > solver->conflictSize() ) {
+                            bestUnminimizedConflict = solver->getConflict(forSolve);
+                        }
+                    }
 
                     std::list<int> conflictMin;
                     for(auto lit: bestUnminimizedConflict)
