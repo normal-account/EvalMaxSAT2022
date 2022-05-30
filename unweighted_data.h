@@ -389,7 +389,7 @@ std::vector<std::string> data_unweighted = {"normalized-par8-2.opb.msat.wcnf.gz"
 "MinFill_R0_miles1500.wcnf.gz",
 "g2_n35e34_n58e61.wcnf.gz",
 "Q34_OPTIONS_1.wcnf.gz",
-"formula_0.8_2021_atleast_63_max-5_reduced_incomplete_tree.wcnf.gz.4.gz",
+"formula_0.8_2021_atleast_63_max-5_reduced_incomplete_tree.wcnf.gz",
 "20-100-frag12-85.wcnf.gz",
 "b15_C-mbd14-0240.wcnf.gz",
 "20-100-frag12-91.wcnf.gz",

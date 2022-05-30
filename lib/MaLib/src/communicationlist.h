@@ -31,6 +31,15 @@ public:
 
     }
 
+    std::list<T> getWithoutRemove() {
+        std::list<T> result;
+        {
+            std::lock_guard<std::mutex> lock(_mutex);
+            result = data;
+        }
+        return result;
+    }
+
     unsigned int getNumberWaiting() {
         std::lock_guard<std::mutex> lock(_mutex);
         return numberWaiting;

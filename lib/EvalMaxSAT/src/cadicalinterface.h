@@ -116,10 +116,10 @@ public:
             return 1;
         }
         if(result==20) { // Unsatisfiable
-            return -1;
+            return 0;
         }
         if(result==0) { // Limit
-            return 0;
+            return -1;
         }
 
         assert(false);
@@ -143,10 +143,10 @@ public:
             return 1;
         }
         if(result==20) { // Unsatisfiable
-            return -1;
+            return 0;
         }
         if(result==0) { // Limit
-            return 0;
+            return -1;
         }
 
         assert(false);
@@ -171,10 +171,10 @@ public:
             return 1;
         }
         if(result==20) { // Unsatisfiable
-            return -1;
+            return 0;
         }
         if(result==0) { // Limit
-            return 0;
+            return -1;
         }
 
         assert(false);

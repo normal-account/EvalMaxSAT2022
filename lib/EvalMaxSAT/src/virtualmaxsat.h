@@ -16,7 +16,8 @@ class VirtualMAXSAT : public VirtualSAT {
 
     bool _isWeighted = false; // TODO : remplacer par  mapWeight2Assum
 protected:
-    std::map<int, std::vector<int> > mapSoft2clause;    // which clause is related to which soft variable.
+    //std::map<int, std::vector<int> > mapSoft2clause;    // which clause is related to which soft variable.
+    std::vector< std::vector<int> >  _mapSoft2clause;
 public:
 
     virtual ~VirtualMAXSAT();
@@ -60,7 +61,12 @@ public:
         addClause(clause);
         clause.pop_back();
 
-        mapSoft2clause[r] = clause;
+        assert(r > 0);
+        if(r >= _mapSoft2clause.size()) {
+            _mapSoft2clause.resize(r+1);
+        }
+        _mapSoft2clause[r] = clause;
+        //mapSoft2clause[r] = clause;
 
         return r;
     }
