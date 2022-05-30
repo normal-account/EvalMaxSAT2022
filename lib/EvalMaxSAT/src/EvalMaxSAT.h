@@ -821,11 +821,14 @@ public:
                         break;
                     }
 
+                    /*
+                    // IL Y A UN BUG QUE JE SUIS EN TRAIN D'INVESTIGER...
                     if(isWeighted()) {
                         if(harden()) {                      // TODO: analyser l'impacte de cette optimisation
                             adapt_am1_FastHeuristicV7();    // TODO: analyser l'impacte de cette optimisation
                         }
                     }
+                    */
 
                     MonPrint("\t\t\tMain Thread: CL_LitToUnrelax.size()!=0");
                 } else { // Conflict found
