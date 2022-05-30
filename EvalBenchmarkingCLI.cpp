@@ -22,7 +22,7 @@
 #include "lib/EvalMaxSAT/src/ParseUtils.h"
 #include "config.h"
 
-// g++ EvalBenchmarking.cpp -o EvalBenchmarking -lpthread -lz
+// g++ EvalBenchmarkingCLI.cpp -o bench -lpthread -lz
 // Warning : if you interrupt the process, the threads will keep going as I didn't handle that case
 
 // !!! Modify the following args !!!
@@ -211,12 +211,12 @@ std::string parse_result(std::string path, long long unsigned trueCost, std::str
         case 'o':
         {
             if(!(iss >> cost)) { // Getting the cost
-                {std::lock_guard lock(forPrint); std::cerr << "Parsing error. line: " << line << std::endl;}
+                {std::lock_guard<std::mutex> lock(forPrint); std::cerr << "Parsing error. line: " << line << std::endl;}
                 return "-1";
             }
 
             if(cost != trueCost) {
-                {std::lock_guard lock(forPrint); std::cerr << "Error cost: Find = " << cost << ", Inspected = " << trueCost << std::endl;}
+                {std::lock_guard<std::mutex> lock(forPrint); std::cerr << "Error cost: Find = " << cost << ", Inspected = " << trueCost << std::endl;}
                 return "-1";
             }
 
@@ -230,11 +230,11 @@ std::string parse_result(std::string path, long long unsigned trueCost, std::str
         case 's':
         {
             if(!(iss >> res)) {
-                {std::lock_guard lock(forPrint); std::cerr << "Parsing error. line: " << line << std::endl;}
+                {std::lock_guard<std::mutex> lock(forPrint); std::cerr << "Parsing error. line: " << line << std::endl;}
                 return "-1";
             }
             if( (res.compare("OPTIMUM") != 0) && (res.compare("SATISFIABLE") != 0) ) {
-                {std::lock_guard lock(forPrint); std::cerr << "No solution. line: " << line << std::endl;}
+                {std::lock_guard<std::mutex> lock(forPrint); std::cerr << "No solution. line: " << line << std::endl;}
                 return "-1";
             }
             break;
@@ -243,7 +243,7 @@ std::string parse_result(std::string path, long long unsigned trueCost, std::str
         case 'v':
         {
             if(!(iss >> res)) {
-                {std::lock_guard lock(forPrint); std::cerr << "Parsing error. line: " << line << std::endl;}
+                {std::lock_guard<std::mutex> lock(forPrint); std::cerr << "Parsing error. line: " << line << std::endl;}
                 return "-1";
             }
 
@@ -264,7 +264,7 @@ std::string parse_result(std::string path, long long unsigned trueCost, std::str
                 int lit = std::atoi(res.c_str());
                 values.push_back(lit > 0);
                 if( (values.size()-1) != abs(lit) ) {
-                    {std::lock_guard lock(forPrint); std::cerr << "Parsing error. line: " << line << std::endl;}
+                    {std::lock_guard<std::mutex> lock(forPrint); std::cerr << "Parsing error. line: " << line << std::endl;}
                     return "-1";
                 }
 
@@ -273,7 +273,7 @@ std::string parse_result(std::string path, long long unsigned trueCost, std::str
                 while(iss>>lit) {
                     values.push_back(lit > 0);
                     if((values.size()-1) != abs(lit)) {
-                        {std::lock_guard lock(forPrint); std::cerr << "Parsing error. line: " << line << std::endl;}
+                        {std::lock_guard<std::mutex> lock(forPrint); std::cerr << "Parsing error. line: " << line << std::endl;}
                         return "-1";
                     }
                 }
@@ -283,7 +283,7 @@ std::string parse_result(std::string path, long long unsigned trueCost, std::str
 
 
             if(cost != computedCost) {
-                {std::lock_guard lock(forPrint); std::cerr << "Error cost: Retourned cost = " << cost << ", Computed cost = " << computedCost << std::endl;}
+                {std::lock_guard<std::mutex> lock(forPrint); std::cerr << "Error cost: Retourned cost = " << cost << ", Computed cost = " << computedCost << std::endl;}
                 return "-1";
             }
 
@@ -291,7 +291,7 @@ std::string parse_result(std::string path, long long unsigned trueCost, std::str
         }
 
         default:
-            {std::lock_guard lock(forPrint); std::cerr << "Parsing error. line: " << line << std::endl;}
+            {std::lock_guard<std::mutex> lock(forPrint); std::cerr << "Parsing error. line: " << line << std::endl;}
             return "-1";
         }
     }
@@ -310,7 +310,7 @@ void run_benchmark( int threadNumber) {
 
         if (!file_exists(path))
         {
-            {std::lock_guard lock(forPrint);std::cerr << "The following file, at index " << i << ", does not exist : " << std::endl << path << std::endl;}
+            {std::lock_guard<std::mutex> lock(forPrint);std::cerr << "The following file, at index " << i << ", does not exist : " << std::endl << path << std::endl;}
             benchmarksNotFound++;
             continue;
         }
@@ -327,14 +327,14 @@ void run_benchmark( int threadNumber) {
         {
             std::string parsedResult = parse_result( path, (weighted_dataset?data_weighted_cost[i]:data_unweighted_cost[i]), result, threadNumber );
             if (parsedResult == "-1") {
-                {std::lock_guard lock(forPrint);std::cerr << "Parsing error in " << path << " (caused by timeout). Skipping file." << std::endl;}
+                {std::lock_guard<std::mutex> lock(forPrint);std::cerr << "Parsing error in " << path << " (caused by timeout). Skipping file." << std::endl;}
                 benchmarksNotFound++;
                 continue;
             }
             result = parsedResult + "\t" + (weighted_dataset?data_weighted[i]:data_unweighted[i]);
         }
         threadResults[ threadNumber ][ resultIndex ] = result;
-        {std::lock_guard lock(forPrint);std::cout << result << std::endl;}
+        {std::lock_guard<std::mutex> lock(forPrint);std::cout << result << std::endl;}
     }
 }
 
