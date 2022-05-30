@@ -854,6 +854,10 @@ public:
                         _weight[ abs(bestUnminimizedConflict[0]) ] = 0;
                         assert(_assumption.count(bestUnminimizedConflict[0]));
                         _assumption.erase(bestUnminimizedConflict[0]);
+                        
+                        CL_LitToRelax.push(bestUnminimizedConflict[0]);
+                        apply_CL_LitToRelax();
+                        
                         continue;
                     }
 
