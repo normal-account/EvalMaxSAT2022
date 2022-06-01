@@ -21,6 +21,8 @@ MaLib::Chrono C_solve("c Cumulative time spent solving SAT formulas");
 MaLib::Chrono C_fastMinimize("c Cumulative time spent for fastMinimize");
 MaLib::Chrono C_fullMinimize("c Cumulative time spent for fullMinimize");
 MaLib::Chrono C_extractAM("c Cumulative time spent for extractAM");
+MaLib::Chrono C_harden("c Cumulative time spent for harden");
+MaLib::Chrono C_extractAMAfterHarden("c Cumulative time spent for extractAM afterHarden");
 
 
 template<class B>
@@ -158,34 +160,6 @@ class EvalMaxSAT : public VirtualMAXSAT {
 
     std::set<int> _assumption;
 
-
-    t_weight removeSameAmount(std::vector<int>& lits) {
-        t_weight result = _weight[ abs(lits[0]) ];
-        for(auto l: lits) {
-            if(result > _weight[ abs(l) ]) {
-                result = _weight[ abs(l) ];
-            }
-        }
-        for(unsigned int i=0; i<lits.size(); ) {
-            assert( mapWeight2Assum[abs(lits[i])].count(lits[i]) );
-            mapWeight2Assum[abs(lits[i])].erase(lits[i]);
-            _weight[ abs(lits[i]) ] -= result;
-
-            if(_weight[ abs(lits[i]) ] == 0) {
-                _assumption.erase(lits[i]);
-                lits[i] = lits.back();
-                lits.pop_back();
-                if(std::get<0>(mapAssum2cardAndK[abs(lits[i])])) {
-                    CL_LitToRelax.push(lits[i]);
-                }
-            } else {
-                mapWeight2Assum[abs(lits[i])].insert(lits[i]);
-                i++;
-            }
-        }
-        return result;
-    }
-
     //////////////////////////////
     ////// For extractAM ////////
     ////////////////////////////
@@ -213,11 +187,11 @@ class EvalMaxSAT : public VirtualMAXSAT {
        std::vector<int> prop;
        unsigned int nbCliqueFound=0;
 
-       // TODO : trier les var en fonction du nombre de fois où elles apparaissent dans la formule ?
+       // TODO : trier les var en fonction du nombre de prop.size()    apres solver->propagate({LIT}, prop)
 
        // Where nVarsInSolver represents the number of vars before the cardinality constraints. We don't want to
        // propagate soft vars representing cardinality constraints.     // TODO: pour quoi pas ?
-       for(unsigned int VAR = 1; VAR<nVarsInSolver; VAR++) {
+       for(unsigned int VAR = 1; VAR<_weight.size(); VAR++) {    // TODO : Utiliser mapWeight2Assum pour eviter de parcourire tout _weight
            if(_weight[VAR] == 0)
                continue;
 
@@ -268,13 +242,11 @@ class EvalMaxSAT : public VirtualMAXSAT {
        unsigned int nbCliqueFound=0;
        std::vector<int> assumption;
 
-       for(unsigned int i=1; i<_weight.size(); i++) {
-           if(_weight[i] > 0) {
-               if(model[i]) {
-                   assumption.push_back(static_cast<int>(i));
-               } else {
-                   assumption.push_back(-static_cast<int>(i));
-               }
+       for(auto & [w, lits]: mapWeight2Assum) {
+           assert(w != 0);
+           for(auto lit: lits) {
+               assert( model[abs(lit)]== (lit>0) );
+               assumption.push_back(lit);
            }
        }
 
@@ -410,6 +382,16 @@ class EvalMaxSAT : public VirtualMAXSAT {
        std::vector<int> newAssum;
 
        while(clause.size() > 1) {
+
+           assert([&](){
+               for(unsigned int i=0; i<clause.size(); i++) {
+                   for(unsigned int j=i+1; j<clause.size(); j++) {
+                       assert(solver->solve(std::vector<int>({clause[i], clause[j]})) == 0 );
+                   }
+               }
+               return true;
+           }());
+
            auto saveClause = clause;
            t_weight w = _weight[ abs(clause[0]) ];
 
@@ -428,8 +410,8 @@ class EvalMaxSAT : public VirtualMAXSAT {
                _weight[ abs(clause[i]) ] -= w;
 
                if( _weight[ abs(clause[i]) ] == 0 ) {
-                   //removeLitFromAssum(clause[i]);
                    _assumption.erase( clause[i] );
+                   relax( clause[i] );
                    clause[i] = clause.back();
                    clause.pop_back();
                } else {
@@ -470,14 +452,12 @@ public:
         mapAssum2cardAndK.push_back({-1, 0});   //
 
 
-        C_solve.tic();
         C_solve.pause(true);
-        C_fastMinimize.tic();
         C_fastMinimize.pause(true);
-        C_fullMinimize.tic();
         C_fullMinimize.pause(true);
-        C_extractAM.tic();
         C_extractAM.pause(true);
+        C_harden.pause(true);
+        C_extractAMAfterHarden.pause(true);
     }
 
     virtual ~EvalMaxSAT();
@@ -497,6 +477,7 @@ public:
                    cost += _weight[abs(clause[0])];
                    _weight[abs(clause[0])] = 0;
                    _assumption.erase(-clause[0]);
+                   relax(-clause[0]);
                }
            }
        }
@@ -565,7 +546,9 @@ public:
                     uselessLit.push_back( lit );
                     mapWeight2Assum[ _weight[abs(lit)] ].insert( lit );
                 } else {
-                    CL_LitToRelax.push(lit);
+                    if(std::get<0>(mapAssum2cardAndK[abs(lit)]) != -1) {
+                        CL_LitToRelax.push(lit);
+                    }
                 }
             }
 
@@ -587,7 +570,9 @@ public:
                     uselessLit.push_back( lit );
                     mapWeight2Assum[ _weight[abs(lit)] ].insert( lit );
                 } else {
-                    CL_LitToRelax.push(lit);
+                    if(std::get<0>(mapAssum2cardAndK[abs(lit)]) != -1) {
+                        CL_LitToRelax.push(lit);
+                    }
                 }
             }
         }
@@ -674,30 +659,34 @@ public:
         while(CL_LitToRelax.size()) {
             int lit = CL_LitToRelax.pop().value_or(0);
             assert(lit != 0);
-            unsigned int var = abs(lit);
+            relax(lit);
+        }
+    }
 
-            assert( _weight[var] == 0 );
-            _weight[var] = 0;
+    // If a soft variable is not soft anymore, we have to check if this variable is a cardinality, in which case, we have to relax the cardinality.
+    void relax(int lit) {
+        assert(lit != 0);
+        unsigned int var = abs(lit);
+        assert( _weight[var] == 0 );
+        _weight[var] = 0;
+        if(std::get<0>(mapAssum2cardAndK[var]) != -1) { // If there is a cardinality constraint associated to this soft var
+            int idCard = std::get<0>(mapAssum2cardAndK[var]); // Get index in save_card
+            assert(idCard >= 0);
 
-            if(std::get<0>(mapAssum2cardAndK[var]) != -1) { // If there is a cardinality constraint associated to this soft var
-                int idCard = std::get<0>(mapAssum2cardAndK[var]); // Get index in save_card
-                assert(idCard >= 0);
+            // Note : No need to increment the cost here, as this cardinality constraint will be added inside another
+            // cardinality constraint, and its non-satisfiability within it would implicate a cost increment anyway...
 
-                // Note : No need to increment the cost here, as this cardinality constraint will be added inside another
-                // cardinality constraint, and its non-satisfiability within it would implicate a cost increment anyway...
+            std::get<1>(save_card[idCard])++; // Increase RHS
 
-                std::get<1>(save_card[idCard])++; // Increase RHS
+            // Get soft var associated with cardinality constraint with increased RHS
+            int forCard = (std::get<0>(save_card[idCard])->atMost(std::get<1>(save_card[idCard])));
 
-                // Get soft var associated with cardinality constraint with increased RHS
-                int forCard = (std::get<0>(save_card[idCard])->atMost(std::get<1>(save_card[idCard])));
-
-                if(forCard != 0) {
-                    _assumption.insert( forCard );
-                    assert( _weight[abs(forCard)] == 0 );
-                    _weight[abs(forCard)] = std::get<2>(save_card[idCard]);
-                    mapWeight2Assum[_weight[abs(forCard)]].insert( forCard );
-                    mapAssum2cardAndK[ abs(forCard) ] = {idCard, std::get<1>(save_card[idCard])};
-                }
+            if(forCard != 0) {
+                _assumption.insert( forCard );
+                assert( _weight[abs(forCard)] == 0 );
+                _weight[abs(forCard)] = std::get<2>(save_card[idCard]);
+                mapWeight2Assum[_weight[abs(forCard)]].insert( forCard );
+                mapAssum2cardAndK[ abs(forCard) ] = {idCard, std::get<1>(save_card[idCard])};
             }
         }
     }
@@ -722,17 +711,8 @@ public:
         extractAM();
         C_extractAM.pause(true);
 
-
-        _assumption.clear();    // TODO : garder _assumption a jour pour ne pas avoir a réinitialiser en debut de solve()
-        for(unsigned int i=1; i<_weight.size(); i++) {
-            if(_weight[i] > 0) {
-                if(model[i]) {
-                    _assumption.insert(static_cast<int>(i));
-                } else {
-                    _assumption.insert(-static_cast<int>(i));
-                }
-            }
-        }
+        t_weight minWeightToConsider = chooseNextMinWeight();
+        initializeAssumptions(minWeightToConsider);
 
         std::vector<std::thread> vMinimizeThread;
         vMinimizeThread.reserve(nbMinimizeThread);
@@ -746,6 +726,7 @@ public:
             assert(CL_LitToRelax.size()==0);
             assert(CL_CardToAdd.size()==0);
             maximumNumberOfActiveMinimizingThread = nbMinimizeThread;
+
 
             bool firstSolve = true;
             for(;;) {
@@ -765,18 +746,20 @@ public:
                 if(resultSolve != 0) { // If last solve is not UNSAT
                     MonPrint("\t\t\tMain Thread: Solve() is not false!");
 
-
-                    if(resultSolve == 1) { // If last solve is SAT
-                        //verif();
-                        if(isWeighted()) {
-                            harden();
-                        }
-                    }
-
                     if(firstSolve) {
                         assert( resultSolve == 1 );
                         assert( CL_LitToUnrelax.size() == 0 );
-                        assert( CL_CardToAdd.size() == 0);
+                        assert( CL_CardToAdd.size() == 0 );
+                        assert( CL_ConflictToMinimize.size() == 0 );
+
+                        if(minWeightToConsider > 1) {
+
+                            // TODO : déplacer harden ICI ?
+
+                            minWeightToConsider = chooseNextMinWeight(minWeightToConsider);
+                            initializeAssumptions(minWeightToConsider);
+                            break;
+                        }
 
                         CL_ConflictToMinimize.close(); // Va impliquer la fin des threads minimize
                         for(auto &t: vMinimizeThread)
@@ -799,6 +782,22 @@ public:
                         // Wait() returns the current amount of waiting threads with the task of minimizing - to revisit
                     } while( CL_ConflictToMinimize.wait(nbMinimizeThread, true) < nbMinimizeThread );
                     MonPrint("\t\t\tMain Thread: Fin boucle d'attente");
+
+                    ///////////////
+                    /// HARDEN ////
+                    if(resultSolve == 1) { // If last solve is SAT
+                        if(isWeighted()) {
+                            if(harden()) {
+                                C_extractAMAfterHarden.pause(false);
+                                adapt_am1_FastHeuristicV7();
+                                C_extractAMAfterHarden.pause(true);
+                            }
+                        }
+                    } else {
+                        // TODO: estimer cost sans qu'on est une solution
+                    }
+                    //////////////
+
 
                     // If no variables are left to be unrelaxed, we are ready to consider the new cardinality constraints
                     if(CL_LitToUnrelax.size()==0) {
@@ -827,8 +826,9 @@ public:
                     }
 
                     if(bestUnminimizedConflict.size() == 1) {
+                        // TODO : si c'est une card, essayer de exhaust !!!
                         MonPrint("\t\t\tMain Thread: conflict size = 1");
-                        MonPrint("\t\t\tMain Thread: cost = ", cost, " + ",  _weight[ abs(bestUnminimizedConflict[0]) ]);
+                        MonPrint("\t\t\tMain Thread: cost = ", cost, " + ", _weight[ abs(bestUnminimizedConflict[0]) ]);
                         cost += _weight[ abs(bestUnminimizedConflict[0]) ];
 
                         assert( mapWeight2Assum[_weight[abs(bestUnminimizedConflict[0])]].count( bestUnminimizedConflict[0] ) );
@@ -836,11 +836,11 @@ public:
                         _weight[ abs(bestUnminimizedConflict[0]) ] = 0;
                         assert(_assumption.count(bestUnminimizedConflict[0]));
                         _assumption.erase(bestUnminimizedConflict[0]);
-
-                        if(std::get<0>(mapAssum2cardAndK[abs(bestUnminimizedConflict[0])]) != -1) {
-                          CL_LitToRelax.push(bestUnminimizedConflict[0]);
-                          apply_CL_LitToRelax();
-                        }
+                        relax(bestUnminimizedConflict[0]);
+                        //if(std::get<0>(mapAssum2cardAndK[abs(bestUnminimizedConflict[0])]) != -1) {
+                        //  CL_LitToRelax.push(bestUnminimizedConflict[0]);
+                        //  apply_CL_LitToRelax();
+                        //}
                         continue;
                     }
 
@@ -955,10 +955,14 @@ public:
                 while(CL_LitToUnrelax.size()) {
                     auto element = CL_LitToUnrelax.pop();
                     assert(element);
+                    assert(_weight[abs(*element)] > 0);
                     _assumption.insert(*element);
                 }
             }
-        }
+
+
+
+         }
 
     }
 
@@ -1056,6 +1060,8 @@ public:
             }
             if(_weight[var] > 0) {
                 mapWeight2Assum[_weight[var]].insert( (model[var]?1:-1)*var );
+            } else {
+                relax(var);
             }
         }
 
@@ -1229,12 +1235,10 @@ private:
 
     bool getValueImpliesByAssign(unsigned int var) {
         // TODO : ajouter un cache qui se vide apres chaque nouvel appel a solve ? (faire un benchmarking pour vérifier si ca vaut le coups)
-
         if(var < _mapSoft2clause.size()) {
             if(_mapSoft2clause[var].size()) {
                 for(auto lit: _mapSoft2clause[var]) {
-                    assert( getValueImpliesByAssign( abs(lit) ) == solver->getValue( abs(lit) ) );
-                    if( getValue( abs(lit) ) == (lit>0) ) {
+                    if( getValueImpliesByAssign( abs(lit) ) == (lit>0) ) {
                         return true;
                     }
                 }
@@ -1242,6 +1246,7 @@ private:
             }
         }
 
+        assert(var < mapAssum2cardAndK.size());
         auto [idCard, k] = mapAssum2cardAndK[var];
         if( idCard == -1 ) {
             return getValue(var);
@@ -1260,9 +1265,41 @@ private:
     t_weight currentSolutionCost() {
         t_weight result = cost;
 
+        // Consider lit not stratified
+        for(auto & [w, lits]: mapWeight2Assum) {
+            assert(w != 0);
+            for(auto lit: lits) {
+                auto var = abs(lit);
+                assert(_weight[var] > 0);
+                if( getValueImpliesByAssign(var) != model[var] ) {
+                    assert( (_assumption.count(model[var]?var:-var) == 0) );
+                    result += _weight[var];
+
+                    if( std::get<0>(mapAssum2cardAndK[var]) != -1 ) {
+                        auto [card, k, w] = save_card[ std::get<0>(mapAssum2cardAndK[var]) ];
+
+                        unsigned int sum=0;
+                        for(auto lit: card->getClause()) {
+                            if( getValueImpliesByAssign( abs(lit) ) == (lit>0) ) {
+                                sum++;
+                            }
+                        }
+                        assert(sum > k); // car la card n'est pas satisfaite
+
+                        result += ((t_weight)(sum-k-1)) * w;
+                    }
+
+
+                }
+            }
+        }
+
+
+
+
         // Consider the cards not yet created
         t_weight newCardCost = 0;
-        for(const auto [clause, exhaust, w]: CL_CardToAdd.getWithoutRemove()) {
+        for(const auto & [clause, exhaust, w]: CL_CardToAdd.getWithoutRemove_unsafe()) {
             unsigned int nb=0;
             for(auto lit: clause) {
                 unsigned int var = abs(lit);
@@ -1278,18 +1315,18 @@ private:
 
         // Consider lit to relax
         t_weight costFromRelax = 0;
-        for(int lit: CL_LitToRelax.getWithoutRemove()) {
+        for(const int & lit: CL_LitToRelax.getWithoutRemove_unsafe()) {
             unsigned int var = abs(lit);
 
             auto [idCard, varK] = mapAssum2cardAndK[var];
 
+            assert(idCard != -1);
             if(idCard != -1) { // If there is a cardinality constraint associated to this soft var
                 assert(idCard >= 0);
 
                 unsigned int k = std::get<1>(save_card[idCard]);
                 assert(k == varK);
                 t_weight w = std::get<2>(save_card[idCard]);
-
                 unsigned int sum = 0;
                 for(auto l: std::get<0>(save_card[idCard])->getClause()) {
                     if( getValueImpliesByAssign( abs(l) ) == (l>0) ) {
@@ -1309,42 +1346,129 @@ private:
 
     // All soft variables whose cost is higher than the current solution can be considered as hard.
     unsigned int harden() {
-
-        unsigned int nbHarden=0;
+        C_harden.pause(false);
 
         auto costRemovedAssumLOCAL = currentSolutionCost();
 
         assert([&](){
+            C_harden.pause(true);
             std::vector<bool> assign;
             assign.push_back(0); // fake var_0
             for(unsigned int i=1; i<=nInputVars; i++) {
                 assign.push_back(getValue(i));
             }
             auto costCalculated = calculateCost(savePourTest_file, assign);
+            C_harden.pause(false);
+            if(costRemovedAssumLOCAL != costCalculated) {
+                std::cout << "assign.size() = " << assign.size() << std::endl;
+                std::cout << "costRemovedAssumLOCAL = " << costRemovedAssumLOCAL << std::endl;
+                std::cout << "costCalculated = " << costCalculated << std::endl;
+            }
 
             return costRemovedAssumLOCAL == costCalculated;
         }()); // POUR DEBUG : On vérifi que currentSolutionCost() estime corectement le cout
 
         costRemovedAssumLOCAL -= cost;
 
-        for(auto it = _assumption.begin(); it != _assumption.end(); ) {
-            int lit = *it;
-            ++it; // We increment "it" here beacause addClause({lit}) will remove lit from assumption
-            if( _weight[ abs(lit) ] >= costRemovedAssumLOCAL ) {
-                nbHarden++;
-                assert( model[abs(lit)] == (lit>0) );
-                addClause({lit});
+        std::vector<int> unitClausesToAdd;
+        for(auto it=mapWeight2Assum.rbegin(); it!=mapWeight2Assum.rend(); ++it) {
+            if(it->first < costRemovedAssumLOCAL)
+                break;
+            for(auto lit: it->second) {
+                auto var = abs(lit);
+                assert( model[var] == (lit>0)  );
+                if( getValueImpliesByAssign(var) == model[var]) {
+                    unitClausesToAdd.push_back( lit );
+                }
             }
         }
 
-        if(nbHarden) {
-            MonPrint("\t\t\tMain Thread: ", nbHarden, " harden !");
+        for(auto lit: unitClausesToAdd) {
+            addClause({lit});
+        }
+        C_harden.pause(true);
+
+        if(unitClausesToAdd.size()) {
+            MonPrint("\t\t\tMain Thread: ", unitClausesToAdd.size(), " harden !");
             assert(solver->solve(_assumption) == 1);
-            assert( harden() == 0 );
+            //assert( harden() == 0 );
         }
 
-        return nbHarden;
+        return unitClausesToAdd.size();
     }
+
+    ///////////////////
+    /// For stratify //
+    ///////////////////
+
+    t_weight chooseNextMinWeight(t_weight previousMinWeight = -1) {
+
+        // clear empty mapWeight2Assum
+        for(auto it = mapWeight2Assum.begin(); it != mapWeight2Assum.end(); ) {
+            if(it->second.size() == 0) {
+                it = mapWeight2Assum.erase(it);
+            } else {
+                ++it;
+            }
+        }
+
+        unsigned int nbSoft = 0;
+        for(auto &e: mapWeight2Assum) {
+            nbSoft += e.first;
+        }
+
+        unsigned int nbNewConsidered = 0;
+        unsigned int nbAlreadyConsidered = 0;
+        unsigned int remainingLevel = mapWeight2Assum.size();
+        for(auto it = mapWeight2Assum.rbegin() ; it != mapWeight2Assum.rend(); ++it, --remainingLevel) {
+
+            if( it->first >= previousMinWeight ) {
+                nbAlreadyConsidered += it->second.size();
+                continue;
+            }
+
+            nbNewConsidered += it->second.size();
+
+            /*
+            /// Smallest
+            t_weight result = it->first;
+            ++it;
+            if(it == mapWeight2Assum.rend())
+                return 1;
+            return result;
+            */
+/*
+            if( ((double)nbNewConsidered / (double)(nbSoft - nbAlreadyConsidered)) >= strategy ) {
+                return it->first;
+            }
+            */
+            if( ((double)nbNewConsidered / (double)(nbSoft)) >= 0.1) { // 10%   // TODO: trouver une stratégie
+                auto result = it->first;
+                ++it;
+                if(it == mapWeight2Assum.rend()) {
+                    assert(remainingLevel == 1);
+                    break;
+                }
+                return result;
+            }
+        }
+
+        return 1;
+    }
+
+    void initializeAssumptions(t_weight minWeight) {
+        _assumption.clear();
+        for(unsigned int i=1; i<_weight.size(); i++) {  // TODO : Utiliser mapWeight2Assum pour eviter de parcourire tout _weight
+            if(_weight[i] >= minWeight) {
+                if(model[i]) {
+                    _assumption.insert(static_cast<int>(i));
+                } else {
+                    _assumption.insert(-static_cast<int>(i));
+                }
+            }
+        }
+    }
+
 };
 
 
