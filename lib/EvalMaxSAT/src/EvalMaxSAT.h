@@ -169,6 +169,12 @@ class EvalMaxSAT : public VirtualMAXSAT {
     }
 
    void reduceCliqueV2(std::list<int> & clique) {
+       if(isWeighted()) {
+           clique.sort([&](int litA, int litB){
+               return _weight[ abs(litA) ] < _weight[ abs(litB) ];
+           });
+       }
+
        for(auto posImpliquant = clique.begin() ; posImpliquant != clique.end() ; ++posImpliquant) {
            auto posImpliquant2 = posImpliquant;
            for(++posImpliquant2 ; posImpliquant2 != clique.end() ; ) {
@@ -182,7 +188,8 @@ class EvalMaxSAT : public VirtualMAXSAT {
    }
 
    bool adapt_am1_FastHeuristicV7() {
-       MonPrint("adapt_am1_FastHeuristic");
+       MonPrint("adapt_am1_FastHeuristic : (_weight.size() = ", _weight.size(), " )");
+
        Chrono chrono;
        std::vector<int> prop;
        unsigned int nbCliqueFound=0;
@@ -200,8 +207,6 @@ class EvalMaxSAT : public VirtualMAXSAT {
            prop.clear();
            if(solver->propagate({LIT}, prop)) {
                if(prop.size() == 0)
-                   continue;
-               if(prop.size() == 1)
                    continue;
 
                std::list<int> clique;
@@ -1341,6 +1346,8 @@ private:
         }
         result += costFromRelax;
 
+        //std::cout << "c cost in ["<<cost<<", "<<result<<"]" << std::endl;
+
         return result;
     }
 
@@ -1349,6 +1356,8 @@ private:
         C_harden.pause(false);
 
         auto costRemovedAssumLOCAL = currentSolutionCost();
+
+        //std::cout << "o " << costRemovedAssumLOCAL << std::endl;
 
         assert([&](){
             C_harden.pause(true);
@@ -1402,7 +1411,7 @@ private:
     ///////////////////
 
     t_weight chooseNextMinWeight(t_weight previousMinWeight = -1) {
-
+//return 1;
         // clear empty mapWeight2Assum
         for(auto it = mapWeight2Assum.begin(); it != mapWeight2Assum.end(); ) {
             if(it->second.size() == 0) {
@@ -1458,15 +1467,15 @@ private:
 
     void initializeAssumptions(t_weight minWeight) {
         _assumption.clear();
-        for(unsigned int i=1; i<_weight.size(); i++) {  // TODO : Utiliser mapWeight2Assum pour eviter de parcourire tout _weight
-            if(_weight[i] >= minWeight) {
-                if(model[i]) {
-                    _assumption.insert(static_cast<int>(i));
-                } else {
-                    _assumption.insert(-static_cast<int>(i));
-                }
+
+        for(auto it = mapWeight2Assum.rbegin(); it != mapWeight2Assum.rend(); ++it) {
+            if(it->first < minWeight)
+                break;
+            for(auto lit: it->second) {
+                _assumption.insert(lit);
             }
         }
+
     }
 
 };
