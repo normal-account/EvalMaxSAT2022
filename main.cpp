@@ -16,8 +16,9 @@ using namespace MaLib;
 
 EvalMaxSAT* monMaxSat = nullptr;
 
+std::string cur_file;
 void signalHandler( int signum ) {
-    std::cout << "c Interrupt signal (" << signum << ") received." << std::endl;
+    std::cout << "c Interrupt signal (" << signum << ") received, curFile = "<<cur_file<< std::endl;
     std::cout << "c o >=" << monMaxSat->getCost() << std::endl;
     std::cout << "s UNKNOWN" << std::endl;
 
@@ -124,7 +125,7 @@ int main(int argc, char *argv[])
 
     CLI11_PARSE(app, argc, argv);
     ////////////////////////////////////////
-
+    cur_file = file;
 
     auto monMaxSat = new EvalMaxSAT(paralleleThread);
     monMaxSat->setTimeOutFast(timeOutFastMinimize);
