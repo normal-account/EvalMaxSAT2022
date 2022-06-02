@@ -127,6 +127,10 @@ namespace MaLib
                 //static double total; total+=val/1000000.0; std::cout<<"Total : "<<total<<" s"<<std::endl; // TODO: Remove this line
             }
 
+            void afficherQuandDetruit(bool val) {
+                _afficherQuandDetruit = val;
+            }
+
         private :
 
 

@@ -29,24 +29,18 @@ void signalHandler( int signum ) {
 
 
 int test(bool weighted=false) {
+    Chrono chrono("c Total time");
 
-    for(unsigned int id = 0 ; id < (weighted?data_weighted.size():data_unweighted.size()) ; id++) {
+    std::cout << "Time (sec) \t File" << std::endl;
+    for(unsigned int id = 0 ; id < (weighted?data_weighted.size():data_unweighted.size()); id++) {
         srand(0);
-        std::cout << id << ":" << (weighted?data_weighted[id]:data_unweighted[id]) << std::endl;
-
-
-        if( (id==34) || (id==45)  )
-            continue;
-
-
-        //if( (id==94) || (id==105) || (id==110) || (id==163) )
-        //    continue;
+        std::cout << (weighted?data_weighted[id]:data_unweighted[id]) << "\t" << std::flush;
 
         monMaxSat = new EvalMaxSAT();
 
         std::string filePath = (weighted?BENCHMARK_FILES_FOLDER_WEIGHTED:BENCHMARK_FILES_FOLDER_UNWEIGHTED) + (weighted?data_weighted[id]:data_unweighted[id]); // For a custom path
 
-        MaLib::Chrono C( filePath);
+        MaLib::Chrono C;
 
 
         if(!monMaxSat->parse(filePath)) { // TODO : rendre robuste au header mismatch
@@ -87,8 +81,9 @@ int test(bool weighted=false) {
             if( calculateCost( filePath, assign) != monMaxSat->getCost() ) {
                 std::cerr << "o Error: " << calculateCost( filePath, assign) << " != " << monMaxSat->getCost() << std::endl;
             }
-            assert( calculateCost( filePath, assign) == monMaxSat->getCost() );
+//            assert( calculateCost( filePath, assign) == monMaxSat->getCost() );
         }
+        std::cout << C.tacSec() << std::endl;
         delete monMaxSat;
     }
     return 0;
@@ -98,7 +93,7 @@ int main(int argc, char *argv[])
 {
     if(argc==1) {
         // TODO : cette section est juste pour le dévelopement
-        bool TESTER_LE_CAS_WEIGHTED = false;
+        bool TESTER_LE_CAS_WEIGHTED = true;
         return test( TESTER_LE_CAS_WEIGHTED );
     }
 
@@ -124,6 +119,9 @@ int main(int argc, char *argv[])
     bool oldOutputFormat = false;
     app.add_flag("--old", oldOutputFormat, "Use old output format.");
 
+    bool bench = false;
+    app.add_flag("--bench", bench, "Print result in one line");
+
     CLI11_PARSE(app, argc, argv);
     ////////////////////////////////////////
 
@@ -141,7 +139,17 @@ int main(int argc, char *argv[])
         return 0;
     }
 
-    if(oldOutputFormat) {
+
+    if(bench) {
+        std::cout << file << "\t" << monMaxSat->getCost() << "\t" << chrono.tacSec() << std::endl;
+        chrono.afficherQuandDetruit(false);
+        C_solve.afficherQuandDetruit(false);
+        C_fastMinimize.afficherQuandDetruit(false);
+        C_fullMinimize.afficherQuandDetruit(false);
+        C_extractAM.afficherQuandDetruit(false);
+        C_harden.afficherQuandDetruit(false);
+        C_extractAMAfterHarden.afficherQuandDetruit(false);
+    } else if(oldOutputFormat) {
         ////// PRINT SOLUTION OLD FORMAT //////////////////
         std::cout << "s OPTIMUM FOUND" << std::endl;
         std::cout << "o " << monMaxSat->getCost() << std::endl;

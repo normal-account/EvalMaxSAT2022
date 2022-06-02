@@ -971,7 +971,6 @@ public:
 
     }
 
-
     void setTimeOutFast(unsigned int timeOutFastMinimize) {
         _timeOutFastMinimize = timeOutFastMinimize;
     }
@@ -1411,7 +1410,7 @@ private:
     ///////////////////
 
     t_weight chooseNextMinWeight(t_weight previousMinWeight = -1) {
-//return 1;
+return 1;
         // clear empty mapWeight2Assum
         for(auto it = mapWeight2Assum.begin(); it != mapWeight2Assum.end(); ) {
             if(it->second.size() == 0) {
