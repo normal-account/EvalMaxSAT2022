@@ -512,6 +512,14 @@ std::vector< std::tuple<std::string, unsigned long long >> reponsesWeighted = {
 
 using namespace csv;
 
+std::string base_name(std::string const & path)
+{
+    if(path.find("/") != std::string::npos) {
+        return path.substr(path.find_last_of("/\\") + 1);
+    }
+    return path;
+}
+
 int main(int argc, char const *argv[])
 {
 
@@ -535,7 +543,7 @@ int main(int argc, char const *argv[])
             continue;
 
         auto it = row.begin();
-        std::string file = (it++)->get<std::string>();
+        std::string file = base_name((it++)->get<std::string>());
         mapCost[file] = (it++)->get<unsigned long long>();
         mapTime[file] = (it++)->get<unsigned long>();
     }
