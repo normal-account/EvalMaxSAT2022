@@ -755,6 +755,17 @@ public:
                 if(resultSolve != 0) { // If last solve is not UNSAT
                     MonPrint("\t\t\tMain Thread: Solve() is not false!");
 
+                    if(firstSolve && minWeightToConsider==1) {
+                        assert( resultSolve == 1 );
+                        assert( CL_LitToUnrelax.size() == 0 );
+                        assert( CL_CardToAdd.size() == 0 );
+                        assert( CL_ConflictToMinimize.size() == 0 );
+                        CL_ConflictToMinimize.close(); // Va impliquer la fin des threads minimize
+                        for(auto &t: vMinimizeThread)
+                            t.join();
+                        return true;
+                    }
+
                     ///////////////
                     /// HARDEN ////
                     if(resultSolve == 1) { // If last solve is SAT
@@ -776,20 +787,9 @@ public:
                         assert( CL_CardToAdd.size() == 0 );
                         assert( CL_ConflictToMinimize.size() == 0 );
 
-                        if(minWeightToConsider > 1) {
-
-                            // TODO : déplacer harden ICI ?
-
-                            minWeightToConsider = chooseNextMinWeight(minWeightToConsider);
-                            initializeAssumptions(minWeightToConsider);
-                            break;
-                        }
-
-                        CL_ConflictToMinimize.close(); // Va impliquer la fin des threads minimize
-                        for(auto &t: vMinimizeThread)
-                            t.join();
-
-                        return true;
+                        minWeightToConsider = chooseNextMinWeight(minWeightToConsider);
+                        initializeAssumptions(minWeightToConsider);
+                        break;
                     }
 
                     chronoLastSolve.pause(true);
