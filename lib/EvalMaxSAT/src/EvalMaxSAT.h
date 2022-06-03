@@ -751,6 +751,21 @@ public:
                 if(resultSolve != 0) { // If last solve is not UNSAT
                     MonPrint("\t\t\tMain Thread: Solve() is not false!");
 
+                    ///////////////
+                    /// HARDEN ////
+                    if(resultSolve == 1) { // If last solve is SAT
+                        if(isWeighted()) {
+                            if(harden()) {
+                                C_extractAMAfterHarden.pause(false);
+                                adapt_am1_FastHeuristicV7();
+                                C_extractAMAfterHarden.pause(true);
+                            }
+                        }
+                    } else {
+                        // TODO: estimer cost sans qu'on est une solution
+                    }
+                    //////////////
+
                     if(firstSolve) {
                         assert( resultSolve == 1 );
                         assert( CL_LitToUnrelax.size() == 0 );
@@ -787,21 +802,6 @@ public:
                         // Wait() returns the current amount of waiting threads with the task of minimizing - to revisit
                     } while( CL_ConflictToMinimize.wait(nbMinimizeThread, true) < nbMinimizeThread );
                     MonPrint("\t\t\tMain Thread: Fin boucle d'attente");
-
-                    ///////////////
-                    /// HARDEN ////
-                    if(resultSolve == 1) { // If last solve is SAT
-                        if(isWeighted()) {
-                            if(harden()) {
-                                C_extractAMAfterHarden.pause(false);
-                                adapt_am1_FastHeuristicV7();
-                                C_extractAMAfterHarden.pause(true);
-                            }
-                        }
-                    } else {
-                        // TODO: estimer cost sans qu'on est une solution
-                    }
-                    //////////////
 
 
                     // If no variables are left to be unrelaxed, we are ready to consider the new cardinality constraints
@@ -961,7 +961,9 @@ public:
                     auto element = CL_LitToUnrelax.pop();
                     assert(element);
                     assert(_weight[abs(*element)] > 0);
-                    _assumption.insert(*element);
+                    //if( _weight[abs(*element)] > minWeightToConsider) {
+                        _assumption.insert(*element);
+                    //}
                 }
             }
 
@@ -1410,7 +1412,7 @@ private:
     ///////////////////
 
     t_weight chooseNextMinWeight(t_weight previousMinWeight = -1) {
-return 1;
+return 1;   // Unactivate stratigy
         // clear empty mapWeight2Assum
         for(auto it = mapWeight2Assum.begin(); it != mapWeight2Assum.end(); ) {
             if(it->second.size() == 0) {
@@ -1437,19 +1439,21 @@ return 1;
 
             nbNewConsidered += it->second.size();
 
-            /*
-            /// Smallest
-            t_weight result = it->first;
-            ++it;
-            if(it == mapWeight2Assum.rend())
-                return 1;
-            return result;
-            */
+
+                    /// Smallest
+                    t_weight result = it->first;
+                    ++it;
+                    if(it == mapWeight2Assum.rend())
+                        break;
+                    MonPrint("\t\t\tMain Thread: chooseNextMinWeight = ", result);
+                    return result;
+
 /*
             if( ((double)nbNewConsidered / (double)(nbSoft - nbAlreadyConsidered)) >= strategy ) {
                 return it->first;
             }
             */
+                    /*
             if( ((double)nbNewConsidered / (double)(nbSoft)) >= 0.1) { // 10%   // TODO: trouver une stratégie
                 auto result = it->first;
                 ++it;
@@ -1457,10 +1461,13 @@ return 1;
                     assert(remainingLevel == 1);
                     break;
                 }
+                MonPrint("\t\t\tMain Thread: chooseNextMinWeight = ", result);
                 return result;
             }
+            */
         }
 
+        MonPrint("\t\t\tMain Thread: chooseNextMinWeight = 1");
         return 1;
     }
 
