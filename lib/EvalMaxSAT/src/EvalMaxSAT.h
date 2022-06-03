@@ -131,10 +131,13 @@ class EvalMaxSAT : public VirtualMAXSAT {
     std::map<t_weight, std::set<int>> mapWeight2Assum; // Used for the weighted case
 
     MaLib::Chrono chronoLastSolve;
+    MaLib::Chrono mainChronoForSolve;
 
     std::atomic<t_weight> cost = 0;
     unsigned int _timeOutFastMinimize=60; // TODO: Magic number
     unsigned int _coefMinimizeTime = 2.0; // TODO: Magic number
+    double _percentageMinForStratify = 0; // TODO: Magic number
+    double _speedIncreasePercentageMinForStratify = 0.03; // TODO: Magic number : add 0.03 each minute
 
     ///// For communication between threads
     MaLib::CommunicationList< std::tuple<std::list<int>, long> > CL_ConflictToMinimize;
@@ -700,6 +703,7 @@ public:
 public:
 
     bool solve() override {
+        mainChronoForSolve.tic();
         unsigned int nbSecondSolveMin = 20;      // TODO: Magic number
         unsigned int timeOutForSecondSolve = 60; // TODO: Magic number
 
@@ -1412,7 +1416,8 @@ private:
     ///////////////////
 
     t_weight chooseNextMinWeight(t_weight previousMinWeight = -1) {
-return 1;   // Unactivate stratigy
+        //return 1;   // Unactivate stratigy
+
         // clear empty mapWeight2Assum
         for(auto it = mapWeight2Assum.begin(); it != mapWeight2Assum.end(); ) {
             if(it->second.size() == 0) {
@@ -1439,21 +1444,33 @@ return 1;   // Unactivate stratigy
 
             nbNewConsidered += it->second.size();
 
-
-                    /// Smallest
-                    t_weight result = it->first;
-                    ++it;
-                    if(it == mapWeight2Assum.rend())
-                        break;
-                    MonPrint("\t\t\tMain Thread: chooseNextMinWeight = ", result);
-                    return result;
-
-/*
-            if( ((double)nbNewConsidered / (double)(nbSoft - nbAlreadyConsidered)) >= strategy ) {
-                return it->first;
-            }
+            /*
+            /// Smallest
+            t_weight result = it->first;
+            ++it;
+            if(it == mapWeight2Assum.rend())
+                break;
+            MonPrint("\t\t\tMain Thread: chooseNextMinWeight = ", result);
+            return result;
             */
-                    /*
+            if(nbSoft == nbAlreadyConsidered) { // Should not hapen
+                MonPrint("\t\t\tMain Thread: chooseNextMinWeight = 1");
+                return 1;
+            }
+
+            // STRATÉGIE QUI AUGMENTE LE PAS DES STRATIFICATIONS AU FIL DU TEMPS
+            if( ((double)nbNewConsidered / (double)(nbSoft - nbAlreadyConsidered)) >= _percentageMinForStratify + (mainChronoForSolve.tacSec()/60.0)*_speedIncreasePercentageMinForStratify ) {
+                auto result = it->first;
+                ++it;
+                if(it == mapWeight2Assum.rend()) {
+                    assert(remainingLevel == 1);
+                    break;
+                }
+                MonPrint("\t\t\tMain Thread: chooseNextMinWeight = ", result);
+                return result;
+            }
+
+            /*
             if( ((double)nbNewConsidered / (double)(nbSoft)) >= 0.1) { // 10%   // TODO: trouver une stratégie
                 auto result = it->first;
                 ++it;
