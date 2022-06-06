@@ -134,7 +134,6 @@ class EvalMaxSAT : public VirtualMAXSAT {
     MaLib::Chrono mainChronoForSolve;
 
     std::atomic<t_weight> cost = 0;
-    t_weight bestSol = std::numeric_limits<t_weight>::max();
     unsigned int _timeOutFastMinimize=60; // TODO: Magic number
     unsigned int _coefMinimizeTime = 2.0; // TODO: Magic number
     double _percentageMinForStratify = 0; // TODO: Magic number
@@ -705,7 +704,6 @@ public:
 public:
 
     bool solve() override {
-        bestSol = std::numeric_limits<t_weight>::max();
         mainChronoForSolve.tic();
         unsigned int nbSecondSolveMin = 20;      // TODO: Magic number
         unsigned int timeOutForSecondSolve = 60; // TODO: Magic number
@@ -1396,9 +1394,6 @@ private:
         C_harden.pause(false);
 
         auto costRemovedAssumLOCAL = currentSolutionCost();
-        if(bestSol > costRemovedAssumLOCAL) {
-            bestSol = costRemovedAssumLOCAL;
-        }
 
         //std::cout << "o " << costRemovedAssumLOCAL << std::endl;
 
@@ -1419,10 +1414,10 @@ private:
 
             return costRemovedAssumLOCAL == costCalculated;
         }()); // POUR DEBUG : On vérifi que currentSolutionCost() estime corectement le cout
-
+        costRemovedAssumLOCAL = costRemovedAssumLOCAL- cost;
         std::vector<int> unitClausesToAdd;
         for(auto it=mapWeight2Assum.rbegin(); it!=mapWeight2Assum.rend(); ++it) {
-            if(it->first < (bestSol-cost))
+            if(it->first < costRemovedAssumLOCAL)
                 break;
             for(auto lit: it->second) {
                 auto var = abs(lit);
