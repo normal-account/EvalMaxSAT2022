@@ -134,6 +134,7 @@ class EvalMaxSAT : public VirtualMAXSAT {
     MaLib::Chrono mainChronoForSolve;
 
     std::atomic<t_weight> cost = 0;
+    t_weight bestSol = std::numeric_limits<t_weight>::max();
     unsigned int _timeOutFastMinimize=60; // TODO: Magic number
     unsigned int _coefMinimizeTime = 2.0; // TODO: Magic number
     double _percentageMinForStratify = 0; // TODO: Magic number
@@ -535,7 +536,7 @@ public:
         std::vector<int> L;
         bool completed=false;
         t_weight minWeight = std::numeric_limits<t_weight>::max();
-        if(!doFastMinimize) {
+        if( (!doFastMinimize) && (mainChronoForSolve.tacSec() < (3600/2)) ) {
             std::set<int> conflictMin(conflict.begin(), conflict.end());
             completed = fullMinimize(S, conflictMin, uselessLit, _coefMinimizeTime*refTime);
             for(auto lit: conflictMin) {
@@ -561,7 +562,8 @@ public:
             }
 
         } else {
-            MonPrint("minimize: skip car plus de 100000 ");
+            MonPrint("FullMinimize: skip");
+            completed = fullMinimizeOneIT(S, conflict);
 
             for(auto lit: conflict) {
                 L.push_back(-lit);
@@ -703,6 +705,7 @@ public:
 public:
 
     bool solve() override {
+        bestSol = std::numeric_limits<t_weight>::max();
         mainChronoForSolve.tic();
         unsigned int nbSecondSolveMin = 20;      // TODO: Magic number
         unsigned int timeOutForSecondSolve = 60; // TODO: Magic number
@@ -1194,6 +1197,38 @@ private:
     }
 
 
+    bool fullMinimizeOneIT(VirtualSAT* solverForMinimize, std::list<int> &conflict) {
+        C_fullMinimize.pause(false);
+        int B = 1000;
+        //int B = 10000;
+
+        if(isWeighted()) {
+            conflict.sort( [&](int litA, int litB){
+                return _weight[ abs(litA) ] < _weight[ abs(litB) ];
+            });
+        }
+
+        for(auto it = conflict.begin(); it!=conflict.end(); ) {
+
+            switch(solverForMinimize->solveLimited(conflict, B, *it)) {
+            case 2:
+                [[fallthrough]];
+            case 1:
+                ++it;
+                break;
+
+            case 0:
+                it = conflict.erase(it);
+                break;
+
+            default:
+                assert(false);
+            }
+        }
+
+        return true;
+    }
+
     bool fastMinimize(VirtualSAT* solverForMinimize, std::list<int> &conflict) {
         C_fastMinimize.pause(false);
 
@@ -1361,6 +1396,9 @@ private:
         C_harden.pause(false);
 
         auto costRemovedAssumLOCAL = currentSolutionCost();
+        if(bestSol > costRemovedAssumLOCAL) {
+            bestSol = costRemovedAssumLOCAL;
+        }
 
         //std::cout << "o " << costRemovedAssumLOCAL << std::endl;
 
@@ -1382,11 +1420,9 @@ private:
             return costRemovedAssumLOCAL == costCalculated;
         }()); // POUR DEBUG : On vérifi que currentSolutionCost() estime corectement le cout
 
-        costRemovedAssumLOCAL -= cost;
-
         std::vector<int> unitClausesToAdd;
         for(auto it=mapWeight2Assum.rbegin(); it!=mapWeight2Assum.rend(); ++it) {
-            if(it->first < costRemovedAssumLOCAL)
+            if(it->first < (bestSol-cost))
                 break;
             for(auto lit: it->second) {
                 auto var = abs(lit);
