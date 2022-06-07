@@ -535,56 +535,42 @@ public:
         std::vector<int> L;
         bool completed=false;
         t_weight minWeight = std::numeric_limits<t_weight>::max();
-        if( (!doFastMinimize) && (mainChronoForSolve.tacSec() < (3600/2)) ) {
-            std::set<int> conflictMin(conflict.begin(), conflict.end());
-            completed = fullMinimize(S, conflictMin, uselessLit, _coefMinimizeTime*refTime);
-            for(auto lit: conflictMin) {
-                L.push_back(-lit);
-                if(minWeight > _weight[abs(lit)]) {
-                    minWeight = _weight[abs(lit)];
-                }
+        if( (!doFastMinimize) ) {
+            if( (mainChronoForSolve.tacSec() < (3600/2)) ) {
+                std::set<int> conflictMin(conflict.begin(), conflict.end());
+                completed = fullMinimize(S, conflictMin, uselessLit, _coefMinimizeTime*refTime);
+                conflict = std::list<int>(conflictMin.begin(), conflictMin.end());
+            } else {
+                completed = fullMinimizeOneIT(S, conflict, uselessLit);
             }
-
-            assert(minWeight > 0);
-            for(auto lit: conflictMin) {
-                assert( mapWeight2Assum[ _weight[abs(lit)] ].count( lit ));
-                mapWeight2Assum[ _weight[abs(lit)] ].erase( lit );
-                _weight[abs(lit)] -= minWeight;
-                if( _weight[abs(lit)] != 0) {
-                    uselessLit.push_back( lit );
-                    mapWeight2Assum[ _weight[abs(lit)] ].insert( lit );
-                } else {
-                    if(std::get<0>(mapAssum2cardAndK[abs(lit)]) != -1) {
-                        CL_LitToRelax.push(lit);
-                    }
-                }
-            }
-
         } else {
             MonPrint("FullMinimize: skip");
-            completed = fullMinimizeOneIT(S, conflict);
+        }
 
-            for(auto lit: conflict) {
-                L.push_back(-lit);
-                if(minWeight > _weight[abs(lit)]) {
-                    minWeight = _weight[abs(lit)];
-                }
+
+
+        for(auto lit: conflict) {
+            L.push_back(-lit);
+            if(minWeight > _weight[abs(lit)]) {
+                minWeight = _weight[abs(lit)];
             }
-            assert(minWeight > 0);
-            for(auto lit: conflict) {
-                assert(mapWeight2Assum[ _weight[abs(lit)] ].count( lit ));
-                mapWeight2Assum[ _weight[abs(lit)] ].erase( lit );
-                _weight[abs(lit)] -= minWeight;
-                if( _weight[abs(lit)] != 0) {
-                    uselessLit.push_back( lit );
-                    mapWeight2Assum[ _weight[abs(lit)] ].insert( lit );
-                } else {
-                    if(std::get<0>(mapAssum2cardAndK[abs(lit)]) != -1) {
-                        CL_LitToRelax.push(lit);
-                    }
+        }
+        assert(minWeight > 0);
+        for(auto lit: conflict) {
+            assert( mapWeight2Assum[ _weight[abs(lit)] ].count( lit ));
+            mapWeight2Assum[ _weight[abs(lit)] ].erase( lit );
+            _weight[abs(lit)] -= minWeight;
+            if( _weight[abs(lit)] != 0) {
+                uselessLit.push_back( lit );
+                mapWeight2Assum[ _weight[abs(lit)] ].insert( lit );
+            } else {
+                if(std::get<0>(mapAssum2cardAndK[abs(lit)]) != -1) {
+                    CL_LitToRelax.push(lit);
                 }
             }
         }
+
+
 
         MonPrint("\t\t\tMain Thread: cost = ", cost, " + ", minWeight);
         cost += minWeight;
@@ -1195,7 +1181,7 @@ private:
     }
 
 
-    bool fullMinimizeOneIT(VirtualSAT* solverForMinimize, std::list<int> &conflict) {
+    bool fullMinimizeOneIT(VirtualSAT* solverForMinimize, std::list<int> &conflict, std::vector<int> &uselessLit ) {
         C_fullMinimize.pause(false);
         int B = 1000;
         //int B = 10000;
@@ -1216,6 +1202,7 @@ private:
                 break;
 
             case 0:
+                uselessLit.push_back(*it);
                 it = conflict.erase(it);
                 break;
 
