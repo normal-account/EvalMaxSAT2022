@@ -1209,7 +1209,7 @@ private:
         for(auto it = conflict.begin(); it!=conflict.end(); ) {
 
             switch(solverForMinimize->solveLimited(conflict, B, *it)) {
-            case 2:
+            case -1:
                 [[fallthrough]];
             case 1:
                 ++it;
