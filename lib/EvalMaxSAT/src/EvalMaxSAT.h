@@ -1,4 +1,4 @@
-﻿#ifndef EVALMAXSAT_SLK178903R_H
+#ifndef EVALMAXSAT_SLK178903R_H
 #define EVALMAXSAT_SLK178903R_H
 
 #include <iostream>
@@ -118,7 +118,7 @@ class EvalMaxSAT : public VirtualMAXSAT {
     unsigned int nbMinimizeThread;
 
     VirtualSAT *solver = nullptr;
-    std::vector<VirtualSAT*> solverForMinimize;
+    //std::vector<VirtualSAT*> solverForMinimize;
 
     //int nVars = 0;
     int nVarsInSolver;
@@ -451,9 +451,9 @@ public:
             new CadicalInterface()
     ) : nbMinimizeThread(nbMinimizeThread), solver(solver)
     {
-        for(unsigned int i=0; i<nbMinimizeThread; i++) {
-            solverForMinimize.push_back(new CadicalInterface());
-        }
+        //for(unsigned int i=0; i<nbMinimizeThread; i++) {
+        //    solverForMinimize.push_back(new CadicalInterface());
+        //}
 
         _weight.push_back(0);                   //
         model.push_back(false);                 // Fake lit with id=0
@@ -491,9 +491,6 @@ public:
        }
 
        solver->addClause( clause );
-       for(auto s : solverForMinimize) {
-           s->addClause( clause );
-       }
    }
 
     virtual void simplify() {
@@ -547,8 +544,6 @@ public:
             MonPrint("FullMinimize: skip");
         }
 
-
-
         for(auto lit: conflict) {
             L.push_back(-lit);
             if(minWeight > _weight[abs(lit)]) {
@@ -570,8 +565,6 @@ public:
             }
         }
 
-
-
         MonPrint("\t\t\tMain Thread: cost = ", cost, " + ", minWeight);
         cost += minWeight;
 
@@ -583,7 +576,7 @@ public:
         MonPrint("size conflict after Minimize: ", conflict.size());
     }
 
-    void threadMinimize(unsigned int num, bool fastMinimize) {
+    void threadMinimize(unsigned int num, VirtualSAT* solverForMinimize, bool fastMinimize) {
         for(;;) {
             auto element = CL_ConflictToMinimize.pop();
             MonPrint("threadMinimize[",num,"]: Run...");
@@ -592,8 +585,10 @@ public:
                 break;
             }
 
-            minimize(solverForMinimize[num], std::get<0>(*element), std::get<1>(*element), fastMinimize);
+            minimize(solverForMinimize, std::get<0>(*element), std::get<1>(*element), fastMinimize);
         }
+
+        delete solverForMinimize;
     }
 
     void apply_CL_CardToAdd() {
@@ -712,9 +707,6 @@ public:
 
         std::vector<std::thread> vMinimizeThread;
         vMinimizeThread.reserve(nbMinimizeThread);
-        for(unsigned int i=0; i<nbMinimizeThread; i++) {
-            vMinimizeThread.emplace_back(&EvalMaxSAT::threadMinimize, this, i, _assumption.size() > 100000);
-        }
 
          for(;;) {
             assert(CL_ConflictToMinimize.size()==0);
@@ -753,6 +745,28 @@ public:
                         return true;
                     }
 
+/*
+                    ///////////////
+                    /// HARDEN ////
+                    if(resultSolve == 1) { // If last solve is SAT
+                        if(isWeighted()) {
+                            if(harden()) {
+                                C_extractAMAfterHarden.pause(false);
+                                adapt_am1_FastHeuristicV7();
+                                C_extractAMAfterHarden.pause(true);
+                            }
+                        }
+                    } else {
+                        // TODO: estimer cost sans qu'on est une solution
+                    }
+                    //////////////
+*/
+
+                    chronoLastSolve.pause(true);
+                    MonPrint("\t\t\tMain Thread: CL_ConflictToMinimize.wait(nbMinimizeThread=",nbMinimizeThread,", true)...");
+                    CL_ConflictToMinimize.areWaiting(vMinimizeThread.size());
+                    MonPrint("\t\t\tMain Thread: Fin boucle d'attente");
+
                     ///////////////
                     /// HARDEN ////
                     if(resultSolve == 1) { // If last solve is SAT
@@ -768,6 +782,7 @@ public:
                     }
                     //////////////
 
+
                     if(firstSolve) {
                         assert( resultSolve == 1 );
                         assert( CL_LitToUnrelax.size() == 0 );
@@ -778,21 +793,6 @@ public:
                         initializeAssumptions(minWeightToConsider);
                         break;
                     }
-
-                    chronoLastSolve.pause(true);
-                    MonPrint("\t\t\tMain Thread: CL_ConflictToMinimize.wait(nbMinimizeThread=",nbMinimizeThread,", true)...");
-                    do {
-                        // If variables are still being unrelaxed, then break as the cost may still be reduced
-                        if(CL_LitToUnrelax.size()) {
-                            MonPrint("\t\t\tMain Thread: CL_LitToUnrelax.size() = ", CL_LitToUnrelax.size());
-                            break;
-                        }
-                        maximumNumberOfActiveMinimizingThread = nbMinimizeThread - CL_ConflictToMinimize.getNumberWaiting();
-                        assert(maximumNumberOfActiveMinimizingThread <= nbMinimizeThread);
-
-                        // Wait() returns the current amount of waiting threads with the task of minimizing - to revisit
-                    } while( CL_ConflictToMinimize.wait(nbMinimizeThread, true) < nbMinimizeThread );
-                    MonPrint("\t\t\tMain Thread: Fin boucle d'attente");
 
 
                     // If no variables are left to be unrelaxed, we are ready to consider the new cardinality constraints
@@ -843,26 +843,30 @@ public:
                     MaLib::Chrono chronoForBreak;
                     unsigned int nbSecondSolve = 0;
 
-                    MonPrint("\t\t\tMain Thread: Second solve...");
+                    if(_assumption.size() > 100000) {
+                        MonPrint("\t\t\tMain Thread: Skip second solve...");
+                    } else {
+                        MonPrint("\t\t\tMain Thread: Second solve...");
 
-                    // Shuffle assumptions in a loop to hopefully get a smaller core from the SatSolver
-                    std::vector<int> forSolve(_assumption.begin(), _assumption.end());
-                    while((nbSecondSolve < nbSecondSolveMin) || (chronoLastSolve.tac() >= chronoForBreak.tac())) {
-                        if(bestUnminimizedConflict.size() == 1)
-                            break;
-                        nbSecondSolve++;
-                        if(chronoForBreak.tacSec() > timeOutForSecondSolve)
-                            break;
-                        if(nbSecondSolve > 10000)
-                            break;
+                        // Shuffle assumptions in a loop to hopefully get a smaller core from the SatSolver
+                        std::vector<int> forSolve(_assumption.begin(), _assumption.end());
+                        while((nbSecondSolve < nbSecondSolveMin) || (chronoLastSolve.tac() >= chronoForBreak.tac())) {
+                            if(bestUnminimizedConflict.size() == 1)
+                                break;
+                            nbSecondSolve++;
+                            if(chronoForBreak.tacSec() > timeOutForSecondSolve)
+                                break;
+                            if(nbSecondSolve > 10000)
+                                break;
 
-                        std::random_shuffle(forSolve.begin(), forSolve.end());
+                            std::random_shuffle(forSolve.begin(), forSolve.end());
 
-                        bool res = solver->solve(forSolve);
-                        assert(!res);
+                            bool res = solver->solve(forSolve);
+                            assert(!res);
 
-                        if( bestUnminimizedConflict.size() > solver->conflictSize() ) {
-                            bestUnminimizedConflict = solver->getConflict(forSolve);
+                            if( bestUnminimizedConflict.size() > solver->conflictSize() ) {
+                                bestUnminimizedConflict = solver->getConflict(forSolve);
+                            }
                         }
                     }
 
@@ -895,6 +899,11 @@ public:
                         if(nbMinimizeThread == 0) {
                             minimize(solver, conflictMin, chronoLastSolve.tac(), _assumption.size() > 100000);
                         } else {
+
+                            if( (vMinimizeThread.size() < nbMinimizeThread) && CL_ConflictToMinimize.getNumberWaiting() == 0) {
+                                vMinimizeThread.emplace_back(&EvalMaxSAT::threadMinimize, this, vMinimizeThread.size(), solver->clone(), _assumption.size() > 100000);
+                            }
+
                             CL_ConflictToMinimize.push({conflictMin, chronoLastSolve.tac()});
                         }
 
@@ -951,13 +960,20 @@ public:
                 while(CL_LitToUnrelax.size()) {
                     auto element = CL_LitToUnrelax.pop();
                     assert(element);
-                    assert(_weight[abs(*element)] > 0);
+                    //assert(_weight[abs(*element)] > 0);
                     //if( _weight[abs(*element)] > minWeightToConsider) {
+                    if(_weight[abs(*element)] > 0) {
                         _assumption.insert(*element);
+                    }
                     //}
                 }
             }
 
+            CL_ConflictToMinimize.close(); // Va impliquer la fin des threads minimize
+            for(auto &t: vMinimizeThread)
+                t.join();
+            CL_ConflictToMinimize.clear();
+            vMinimizeThread.clear();
 
 
          }
@@ -1382,8 +1398,6 @@ private:
 
         auto costRemovedAssumLOCAL = currentSolutionCost();
 
-        //std::cout << "o " << costRemovedAssumLOCAL << std::endl;
-
         assert([&](){
             C_harden.pause(true);
             std::vector<bool> assign;
@@ -1530,11 +1544,9 @@ EvalMaxSAT::~EvalMaxSAT() {
     CL_CardToAdd.close();
 
     delete solver;
-    for(auto s: solverForMinimize) {
-        delete s;
-    }
 }
 
 
 
 #endif // EVALMAXSAT_SLK178903R_H
+
