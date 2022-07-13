@@ -1,0 +1,9 @@
+Each subdirectory here contains an application which makes use of a MaxSAT
+solver implementing IPAMIR as a static library.
+
+Issuing 'make' in a directory with the environment variable IPAMIRSOLVER builds
+the application using the MaxSAT solver located in ../../maxsat/$(IPAMIRSOLVER).
+
+Andreas Niskanen
+University of Helsinki
+19.1.2022

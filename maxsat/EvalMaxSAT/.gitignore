@@ -1,0 +1,7 @@
+MaLib
+EvalMaxSAT
+cadical
+EvalMaxSAT_bin
+*.cmake
+*.txt
+Makefile

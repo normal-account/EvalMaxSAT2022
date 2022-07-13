@@ -1,0 +1,29 @@
+The directory structure is the same as the directory structure of the SAT solver
+directory of IPASIR. See ../sat/README for a detailed description.
+
+Briefly put, each subdirectory here corresponds to a MaxSAT solver which
+implements IPAMIR as a static library. The directory must be named after the
+signature of the MaxSAT solver as returned by 'ipamir_signature'.
+
+Each directory contains a makefile (e.g. 'solver2022/makefile') with the default
+goal of compiling the solver and including everything into one static library
+(e.g. 'solver2022/libipamirsolver2022.a').
+
+These target libraries must have a generic name
+
+<IPAMIRSOLVER>/libipamir<IPAMIRSOLVER>.a
+
+where IPAMIRSOLVER is the signature of the MaxSAT śolver.
+
+Optionally, '<IPAMIRSOLVER>/LINK' specifies the required link command
+(e.g. 'g++'). If this file does not exist, 'gcc' is used for linking.
+
+Optionally, '<IPAMIRSOLVER>/LIBS' specifies additional libraries (e.g. '-lz').
+If this file does not exist, no additional libraries are needed.
+
+You may assume that the IPAMIR header is available as '../../ipamir.h' from the
+solver directory.
+
+Andreas Niskanen
+University of Helsinki
+19.1.2022
