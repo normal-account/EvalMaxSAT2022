@@ -9,9 +9,13 @@ cmake_install.cmake
 install_manifest.txt
 compile_commands.json
 CTestTestfile.cmake
+<<<<<<< HEAD
 .idea
 .vscode
 _deps
 *.gch
 *.o
 *.a
+=======
+_deps
+>>>>>>> 7ccbad9f7f8aa1d0df28652b40676becce81cdca
