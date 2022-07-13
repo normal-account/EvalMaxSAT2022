@@ -313,7 +313,7 @@ class EvalMaxSAT : public VirtualMAXSAT {
 
        if(size == 0) {
            for(unsigned int i=0; i<size; i++) {
-               delete conn[i];
+               delete [] conn[i];
            }
            delete [] conn;
            return true;
@@ -328,10 +328,10 @@ class EvalMaxSAT : public VirtualMAXSAT {
 
            if(qsize <= 2) { // Hyperparametre: Taille minimal a laquelle arreter la methode exact
                for(unsigned int i=0; i<size; i++) {
-                   delete conn[i];
+                   delete [] conn[i];
                }
                delete [] conn;
-               delete qmax;
+               delete [] qmax;
 
                MonPrint(nbCliqueFound, " cliques found in ", (chrono.tac() / 1000), "ms.");
                return true;
@@ -378,7 +378,7 @@ class EvalMaxSAT : public VirtualMAXSAT {
                }
            }
 
-           delete qmax;
+           delete [] qmax;
        }
 
        assert(false);
