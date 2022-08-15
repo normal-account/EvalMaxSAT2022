@@ -105,9 +105,12 @@ int main(int argc, char *argv[]) {
 You can reuse and adapt the CMakeLists.txt file to compile.
 
 ## Benchmark
+
+The new incremental version was ranked first in 2 out of 5 instances in [MaxSAT Evaluation 2022](https://maxsat-evaluations.github.io/2022/).
+
 The single thread version of EvalMaxSAT was ranked second in [MaxSAT Evaluation 2020](https://maxsat-evaluations.github.io/2020/).
 
 ![img](http://florent.avellaneda.free.fr/maxsat2020.jpg)
 
-The new incremental version was ranked first in 2 out of 5 instances in [MaxSAT Evaluation 2022](https://maxsat-evaluations.github.io/2022/).
+
 
