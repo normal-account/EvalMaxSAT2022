@@ -1,4 +1,6 @@
-Basé sur ce repo : https://bitbucket.org/coreo-group/ipamir/src/master/
+Incremental version of EvalMaxSAT.
+
+Based on the `ipamir` interface : https://bitbucket.org/coreo-group/ipamir/src/master/
 
 ```
 ipamir.h          Reentrant Incremental MaxSAT solver API (reverse)
