@@ -1,1 +1,0 @@
-time ./ipamirapp $1 | grep -v '^[c]'

@@ -1,6 +1,0 @@
-An example application which takes as input a MaxSAT instance in WCNF format
-and uses various IPAMIR functions to modify the instance incrementally.
-
-Andreas Niskanen
-University of Helsinki
-19.1.2022

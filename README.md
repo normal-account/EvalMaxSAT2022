@@ -1,22 +1,15 @@
-Incremental version of EvalMaxSAT.
 
-Based on the `ipamir` interface : https://bitbucket.org/coreo-group/ipamir/src/master/
+TODO
+- Ajouter la prise en charge "Incremental Track" : https://maxsat-evaluations.github.io/2022/incremental.html
+- Stratégie de minimization ?
+- Stratégie de stratification ?
+- A tester : apply_CL_newAssumToConsider() ne rajoute qu'une sous partie des cardinalitées (1 seul ou plus : probablement les cardinalités les plus petites, ou de poids maximal)
+- A tester : Faire décroitre le temps consacré à la minimisation au court du temps
+- A tester : Exhaust permet de résoudre plus de probleme ?
+- A tester : pour adapt_am1_FastHeuristicV7 : trier les var en fonction du nombre de fois où elles apparaissent dans la formule
 
-```
-ipamir.h          Reentrant Incremental MaxSAT solver API (reverse)
-ipasir.h          Reentrant Incremental SAT solver API (reverse)
 
-app               application directory
-maxsat            MaxSAT solver directory
-sat               SAT solver directory
 
-app/README        explains the apps directory
-maxsat/README     explains the MaxSAT solver directory
-sat/README        explains the SAT solver directory
+TODO a plus long terme :
+- Implémenter une approche Branch and Bound pour le Hitting Set Problem. S'inspirer du papier : https://epubs.siam.org/doi/10.1137/1.9781611977042.17
 
-LICENSE           generic license for parts of this software not
-                  explicitly covered by its own license restrictions,
-                  which can be found in the corresponding LICENSE or
-                  COPYRIGHT file in a sub directory or in a distribution
-                  package, such as in an included tar or zip file
-```
