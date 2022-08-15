@@ -1,5 +1,5 @@
 
-# EvalMaxSAT 2O22
+# EvalMaxSAT 2022
 
 This repository contains the versions of EvalMaxSAT competing in [MaxSAT Evaluation 2022](https://maxsat-evaluations.github.io/2022/). The `main` branch contains the weighted and unweighted version, while the `incremental_track` branch contains the incremental version.
 
